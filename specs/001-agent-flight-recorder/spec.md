@@ -8,6 +8,24 @@
 
 **Input**: User description: "Build an open-source AI agent flight recorder that captures prompts, responses, tool calls, and handoffs across multi-agent workflows, then visualizes them as an interactive trace graph with payload inspection, replay, diffing, loop detection, and failure highlighting."
 
+## Phase Scope
+
+### Phase 1 (MVP)
+
+Phase 1 is a strict vertical slice focused on **User Story 1** only: capture, validate, persist, retrieve, and visualize traces with payload inspection and failure highlighting.
+
+Phase 1 explicitly defers:
+
+- Replay/fork workflows
+- Diffing traces
+- Loop detection and loop highlighting
+
+This keeps Phase 1 aligned with the Phase 1-only scope guard in `specs/001-agent-flight-recorder/tasks.md`.
+
+### Future Phases (Phase 2+)
+
+Future phases add replay/fork, diffing, and loop detection capabilities, built on the same schema-as-truth foundation.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Capture & Inspect a Trace (Priority: P1)
@@ -65,7 +83,7 @@ As an AI developer preventing runaway costs and failures, I want the system to d
 
 ## Requirements *(mandatory)*
 
-### Functional Requirements
+### Phase 1 (MVP) Functional Requirements
 
 - **FR-001**: System MUST define a versioned event schema that represents prompts, responses, tool calls, and agent handoffs.
 - **FR-002**: System MUST validate incoming events against the event schema; invalid events MUST be rejected with a clear error.
@@ -77,11 +95,14 @@ As an AI developer preventing runaway costs and failures, I want the system to d
 - **FR-008**: System MUST support payload inspection: selecting a node reveals the full structured payload associated with the event.
 - **FR-009**: System MUST highlight failures: events marked as failed must be visually distinct and easily discoverable.
 - **FR-010**: System MUST preserve trace replayability: stored traces must retain enough information to replay/fork and to compare runs without silently losing required context.
+- **FR-014**: Backend, UI, and adapters MUST remain modular (clear boundaries, shared contracts, minimal cross-coupling).
+- **FR-015**: Tests are mandatory for the event schema, adapters, and replay behavior.
+
+### Future Phase Requirements (Phase 2+)
+
 - **FR-011**: System MUST support replay/fork from a selected point, producing a new trace linked to the original.
 - **FR-012**: System MUST support diffing between two traces and present divergences in a way that helps users understand behavioral changes.
 - **FR-013**: System MUST detect likely loops in traces and surface loop warnings and highlighted segments.
-- **FR-014**: Backend, UI, and adapters MUST remain modular (clear boundaries, shared contracts, minimal cross-coupling).
-- **FR-015**: Tests are mandatory for the event schema, adapters, and replay behavior.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -94,13 +115,16 @@ As an AI developer preventing runaway costs and failures, I want the system to d
 
 ## Success Criteria *(mandatory)*
 
-### Measurable Outcomes
+### Phase 1 Success Criteria
 
 - **SC-001**: A user can capture and view a complete trace for a multi-agent run and locate a failure event in under 60 seconds.
 - **SC-002**: Selecting any node in a trace graph reveals its payload within 1 second for typical traces.
+- **SC-005**: Schema, adapter normalization, and replay behavior are covered by automated tests that run in CI and must pass before merge.
+
+### Future Phase Success Criteria (Phase 2+)
+
 - **SC-003**: Replay/fork produces a new, linked trace and a diff that identifies divergences with no missing references.
 - **SC-004**: Loop detection flags repeated patterns with an explained warning and highlights the relevant trace segment.
-- **SC-005**: Schema, adapter normalization, and replay behavior are covered by automated tests that run in CI and must pass before merge.
 
 ## Assumptions
 

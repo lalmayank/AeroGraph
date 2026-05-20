@@ -35,13 +35,29 @@ describe("web: graph utilities", () => {
 
   it("computePlaybackState limits visible events by cursor index", () => {
     const events = [
-      { occurredAt: "1", spanId: "s1" },
-      { occurredAt: "2", spanId: "s2" },
-      { occurredAt: "3", spanId: "s3" }
+      { occurredAt: "2026-05-20T00:00:00.000Z", spanId: "s1", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:01.000Z", spanId: "s2", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:02.000Z", spanId: "s3", kind: "note" }
     ] as any;
 
     const visible = computePlaybackState(events, 1);
     expect(visible.length).toBe(2);
     expect(visible[1].spanId).toBe("s2");
+  });
+
+  it("computePlaybackState is deterministic when timestamps collide", () => {
+    const occurredAt = "2026-05-20T00:00:00.000Z";
+    const events = [
+      { occurredAt, spanId: "s2", kind: "response" },
+      { occurredAt, spanId: "s1", kind: "response" },
+      { occurredAt, spanId: "s1", kind: "prompt" }
+    ] as any;
+
+    const visible = computePlaybackState(events, 2);
+    expect(visible.map((e: any) => `${e.spanId}:${e.kind}`)).toEqual([
+      "s1:prompt",
+      "s1:response",
+      "s2:response"
+    ]);
   });
 });

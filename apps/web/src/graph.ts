@@ -40,9 +40,16 @@ export function buildGraph(events: TraceEvent[]): { nodes: Node[]; edges: Edge[]
 }
 
 export function computePlaybackState(events: TraceEvent[], cursorIndex: number): TraceEvent[] {
-  // Sort events by occurredAt (T029)
+  // Sort events deterministically (T029): occurredAt, then spanId, then kind.
+  // occurredAt is ISO-8601 per contracts; lexical comparison is time-ordered.
   const sorted = [...events].sort((a, b) => {
-    return new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
+    const t = a.occurredAt.localeCompare(b.occurredAt);
+    if (t !== 0) return t;
+
+    const s = a.spanId.localeCompare(b.spanId);
+    if (s !== 0) return s;
+
+    return a.kind.localeCompare(b.kind);
   });
   
   return sorted.slice(0, cursorIndex + 1);

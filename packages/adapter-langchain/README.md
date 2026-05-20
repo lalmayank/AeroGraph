@@ -14,8 +14,8 @@ LangChain's complex callback hierarchy is deterministically mapped to the minima
 | `handleToolStart` | `tool_call` | input string/JSON, runId -> spanId |
 | `handleToolEnd` | `tool_result` | output, runId -> spanId |
 | `handleToolError` | `error` | error message, runId -> spanId |
-| `handleChainStart` | *(ignored)* | We only trace leafs for MVP |
-| `handleChainEnd` | *(ignored)* | - |
+| `handleChainStart` | `note` | emits `payload.event = "chain_start"` and includes `chainName` |
+| `handleChainEnd` | `note` | emits `payload.event = "chain_end"` and includes output key summary |
 | `handleAgentAction`| *(ignored)* | Caught by tool/llm events |
 
-For Phase 1 MVP, we focus strictly on LLMs and Tools to keep the graph comprehensible.
+For Phase 1 MVP, we focus strictly on LLMs and Tools plus lightweight chain boundary notes to keep the graph comprehensible.

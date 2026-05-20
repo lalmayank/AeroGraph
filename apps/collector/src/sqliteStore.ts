@@ -37,7 +37,10 @@ export class SqliteTraceStore {
     const traces = rows.map((r) => {
       // Try to find the root span (where parent_span_id IS NULL)
       const rootRow = this.db.prepare(`
-        SELECT span_id FROM events WHERE trace_id = ? AND parent_span_id IS NULL LIMIT 1
+        SELECT span_id FROM events
+        WHERE trace_id = ? AND parent_span_id IS NULL
+        ORDER BY occurred_at ASC, id ASC
+        LIMIT 1
       `).get(r.trace_id) as any;
 
       return {
@@ -70,8 +73,17 @@ export class SqliteTraceStore {
     for (const e of events) {
       if (e.occurredAt < createdAt) createdAt = e.occurredAt;
       if (e.occurredAt > updatedAt) updatedAt = e.occurredAt;
-      if (e.parentSpanId === null) rootSpanId = e.spanId;
     }
+
+    const roots = events
+      .filter((e) => e.parentSpanId === null)
+      .slice()
+      .sort((a, b) => {
+        const t = a.occurredAt.localeCompare(b.occurredAt);
+        if (t !== 0) return t;
+        return a.spanId.localeCompare(b.spanId);
+      });
+    rootSpanId = roots.length > 0 ? roots[0].spanId : null;
 
     return {
       meta: {

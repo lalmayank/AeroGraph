@@ -1,3 +1,12 @@
+/**
+ * LEGACY IMPLEMENTATION
+ *
+ * Pre-SQLite JSONL in-memory trace store used during early MVP scaffolding.
+ *
+ * Not used by production collector.
+ * Retained temporarily for reference during Phase 2 replay/fork work.
+ */
+
 import fs from "node:fs";
 import path from "node:path";
 import type {

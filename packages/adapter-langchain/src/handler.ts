@@ -23,6 +23,8 @@ function extractResponseText(generations: any[][]): string {
 export class AFRCallbackHandler extends BaseCallbackHandler {
   name = "AFRCallbackHandler";
 
+  private readonly toolRunMeta = new Map<string, { toolId: string; toolName?: string }>();
+
   constructor(private recorder: FlightRecorder) {
     super();
   }
@@ -88,7 +90,6 @@ export class AFRCallbackHandler extends BaseCallbackHandler {
     await this.recorder.note({
       parentSpanId: parentRunId || null,
       spanId: runId,
-      chainName,
       payload: { event: "chain_start", chainName }
     });
   }
@@ -115,23 +116,36 @@ export class AFRCallbackHandler extends BaseCallbackHandler {
     runId: string,
     parentRunId?: string
   ) {
+    const toolId = tool?.id?.[tool.id.length - 1] || tool?.name || `tool_run_${runId}`;
+    const toolName = tool?.name;
+    this.toolRunMeta.set(runId, { toolId, toolName });
+
     await this.recorder.toolCall({
       parentSpanId: parentRunId || null,
       spanId: runId,
-      toolId: tool?.id?.[tool.id.length - 1] || tool?.name || "unknown",
+      toolId,
+      toolName,
       input: { input }
     });
   }
 
   async handleToolEnd(output: any, runId: string) {
+    const meta = this.toolRunMeta.get(runId);
+    const toolId = meta?.toolId ?? `tool_run_${runId}`;
+    const toolName = meta?.toolName;
+
     await this.recorder.toolResult({
       parentSpanId: runId,
-      toolId: "unknown",
+      toolId,
+      toolName,
       output: { output }
     });
+
+    this.toolRunMeta.delete(runId);
   }
 
   async handleToolError(err: any, runId: string) {
+    this.toolRunMeta.delete(runId);
     await this.recorder.error({
       parentSpanId: runId,
       message: err?.message || String(err)
