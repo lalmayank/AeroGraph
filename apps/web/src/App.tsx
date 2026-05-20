@@ -1,26 +1,205 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import ReactFlow, { Background, Controls } from "reactflow";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  Controls,
+  type NodeTypes,
+  type Node,
+  type Edge,
+} from "reactflow";
 import { type TraceEvent, type TraceMeta } from "@afr/contracts";
 import { createApi } from "./api";
 import { buildGraph, computePlaybackState } from "./graph";
 
-type Selected = {
-  event: TraceEvent;
+// ─── Kind icons + colors ───────────────────────────────────────────────────────
+const KIND_META: Record<string, { icon: string; label: string }> = {
+  prompt:      { icon: "💬", label: "Prompt" },
+  response:    { icon: "✨", label: "Response" },
+  tool_call:   { icon: "🔧", label: "Tool Call" },
+  tool_result: { icon: "📦", label: "Tool Result" },
+  error:       { icon: "⚠️", label: "Error" },
+  handoff:     { icon: "🔀", label: "Handoff" },
+  note:        { icon: "📝", label: "Note" },
 };
+
+// ─── Custom Node Component ─────────────────────────────────────────────────────
+function TraceNode({ data }: { data: { event: TraceEvent; selected?: boolean } }) {
+  const { event } = data;
+  const meta = KIND_META[event.kind] ?? { icon: "◉", label: event.kind };
+  const isError = event.status === "error";
+
+  // Pull a short preview text from the payload
+  let preview = "";
+  const p = (event as any).payload;
+  if (p?.text)   preview = String(p.text).slice(0, 60);
+  else if (p?.message) preview = String(p.message).slice(0, 60);
+  else if (p?.event)   preview = String(p.event).slice(0, 60);
+
+  return (
+    <div
+      style={{
+        background: isError ? "rgba(239,68,68,0.06)" : "rgba(17,24,53,0.95)",
+        border: `1px solid ${isError ? "rgba(239,68,68,0.5)" : "rgba(99,130,255,0.18)"}`,
+        borderRadius: 10,
+        padding: "10px 14px",
+        minWidth: 190,
+        maxWidth: 240,
+        cursor: "pointer",
+        fontFamily: "'Inter', sans-serif",
+        boxShadow: isError
+          ? "0 0 12px rgba(239,68,68,0.15)"
+          : "0 4px 16px rgba(0,0,0,0.35)",
+      }}
+    >
+      {/* Kind badge row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+        <span style={{ fontSize: 13 }}>{meta.icon}</span>
+        <span
+          className={`kind-badge kind-${event.kind}`}
+          style={{ fontSize: 9 }}
+        >
+          {meta.label}
+        </span>
+        <span
+          className={`status-badge status-${event.status}`}
+          style={{ fontSize: 9, marginLeft: "auto" }}
+        >
+          {event.status === "ok" ? "●" : "✕"} {event.status}
+        </span>
+      </div>
+
+      {/* Actor */}
+      <div style={{
+        fontSize: 10,
+        color: "rgba(148,163,184,0.7)",
+        fontFamily: "'JetBrains Mono', monospace",
+        marginBottom: 4,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}>
+        {(event as any).actor?.name ?? (event as any).actor?.id ?? ""}
+      </div>
+
+      {/* Preview text */}
+      {preview && (
+        <div style={{
+          fontSize: 11,
+          color: "#cbd5e1",
+          lineHeight: 1.45,
+          overflow: "hidden",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          wordBreak: "break-word",
+        }}>
+          {preview}{preview.length >= 60 ? "…" : ""}
+        </div>
+      )}
+
+      {/* Timestamp */}
+      <div style={{
+        marginTop: 7,
+        fontSize: 9,
+        color: "rgba(99,130,255,0.5)",
+        fontFamily: "'JetBrains Mono', monospace",
+      }}>
+        {new Date(event.occurredAt).toLocaleTimeString()}
+      </div>
+    </div>
+  );
+}
+
+const nodeTypes: NodeTypes = { afrNode: TraceNode };
+
+// ─── Graph builder override (uses custom node type) ───────────────────────────
+function buildPremiumGraph(
+  events: TraceEvent[],
+  selectedSpanId: string | null
+): { nodes: Node[]; edges: Edge[] } {
+  const base = buildGraph(events);
+  const spacing = { x: 270, y: 140 };
+
+  // Layout: place nodes in a top-down tree using BFS from roots
+  const childrenOf: Record<string, string[]> = {};
+  const parentOf: Record<string, string | null> = {};
+  events.forEach((e) => {
+    parentOf[e.spanId] = e.parentSpanId ?? null;
+    if (e.parentSpanId) {
+      childrenOf[e.parentSpanId] = childrenOf[e.parentSpanId] ?? [];
+      childrenOf[e.parentSpanId].push(e.spanId);
+    }
+  });
+
+  const roots = events.filter((e) => !e.parentSpanId).map((e) => e.spanId);
+  const positions: Record<string, { x: number; y: number }> = {};
+  let col = 0;
+
+  function placeSubtree(spanId: string, depth: number, colOffset: number): number {
+    const children = childrenOf[spanId] ?? [];
+    if (children.length === 0) {
+      positions[spanId] = { x: colOffset * spacing.x, y: depth * spacing.y };
+      return colOffset + 1;
+    }
+    let nextCol = colOffset;
+    children.forEach((child) => {
+      nextCol = placeSubtree(child, depth + 1, nextCol);
+    });
+    const firstChildX = positions[children[0]].x;
+    const lastChildX  = positions[children[children.length - 1]].x;
+    positions[spanId] = { x: (firstChildX + lastChildX) / 2, y: depth * spacing.y };
+    return nextCol;
+  }
+
+  roots.forEach((r) => {
+    col = placeSubtree(r, 0, col);
+  });
+
+  // Fall back to linear for any event not placed (e.g., orphan spans)
+  events.forEach((e, i) => {
+    if (!positions[e.spanId]) {
+      positions[e.spanId] = { x: 0, y: i * spacing.y };
+    }
+  });
+
+  const nodes: Node[] = events.map((event) => ({
+    id: event.spanId,
+    position: positions[event.spanId] ?? { x: 0, y: 0 },
+    type: "afrNode",
+    data: { event, selected: event.spanId === selectedSpanId },
+  }));
+
+  const edges: Edge[] = base.edges.map((e) => ({
+    ...e,
+    animated: true,
+    style: {
+      stroke: "rgba(99,102,241,0.45)",
+      strokeWidth: 1.5,
+    },
+    markerEnd: {
+      type: "arrowclosed" as any,
+      color: "rgba(99,102,241,0.55)",
+      width: 14,
+      height: 14,
+    },
+  }));
+
+  return { nodes, edges };
+}
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+type Selected = { event: TraceEvent };
 
 export default function App() {
   const api = useMemo(() => createApi(), []);
 
-  const [traces, setTraces] = useState<TraceMeta[]>([]);
-  const [traceId, setTraceId] = useState<string>("");
-  const [events, setEvents] = useState<TraceEvent[]>([]);
-  const [selected, setSelected] = useState<Selected | null>(null);
-  const [error, setError] = useState<string>("");
-  
-  // Realtime Polling
+  const [traces, setTraces]           = useState<TraceMeta[]>([]);
+  const [traceId, setTraceId]         = useState<string>("");
+  const [activeMeta, setActiveMeta]   = useState<TraceMeta | null>(null);
+  const [events, setEvents]           = useState<TraceEvent[]>([]);
+  const [selected, setSelected]       = useState<Selected | null>(null);
+  const [error, setError]             = useState<string>("");
   const [liveUpdating, setLiveUpdating] = useState(true);
-  
-  // Playback state
   const [playbackCursor, setPlaybackCursor] = useState<number>(-1);
 
   const visibleEvents = useMemo(() => {
@@ -28,9 +207,12 @@ export default function App() {
     return computePlaybackState(events, playbackCursor);
   }, [events, playbackCursor]);
 
-  const graph = useMemo(() => buildGraph(visibleEvents), [visibleEvents]);
+  const graph = useMemo(
+    () => buildPremiumGraph(visibleEvents, selected?.event.spanId ?? null),
+    [visibleEvents, selected]
+  );
 
-  const refreshTraces = async () => {
+  const refreshTraces = useCallback(async () => {
     try {
       setError("");
       const res = await api.listTraces();
@@ -41,153 +223,244 @@ export default function App() {
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  };
+  }, [api, traceId]);
 
-  const loadTrace = async (selectedTraceId: string) => {
-    if (!selectedTraceId) return;
+  const loadTrace = useCallback(async (id: string) => {
+    if (!id) return;
     try {
       setError("");
-      const trace = await api.getTrace(selectedTraceId);
-      
-      // Update events if changed (rough check by length for MVP)
+      const trace = await api.getTrace(id);
+      setActiveMeta(trace.meta);
       setEvents((prev) => {
-        if (prev.length !== trace.events.length) {
-          // If we were at the end, keep at the end, else keep cursor
-          return trace.events;
-        }
+        if (prev.length !== trace.events.length) return trace.events;
         return prev;
       });
-      
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  };
+  }, [api]);
 
-  useEffect(() => {
-    refreshTraces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  useEffect(() => { refreshTraces(); }, []);
   useEffect(() => {
     loadTrace(traceId);
-    setPlaybackCursor(-1); // Reset playback on trace change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPlaybackCursor(-1);
+    setSelected(null);
   }, [traceId]);
 
-  // Polling mechanism
+  // Polling
   useEffect(() => {
     if (!liveUpdating) return;
-    const interval = setInterval(() => {
+    const id = setInterval(() => {
       refreshTraces();
-      if (traceId) {
-        loadTrace(traceId);
-      }
+      if (traceId) loadTrace(traceId);
     }, 2000);
-    return () => clearInterval(interval);
-  }, [liveUpdating, traceId]);
+    return () => clearInterval(id);
+  }, [liveUpdating, traceId, refreshTraces, loadTrace]);
 
+  const currentStep = playbackCursor === -1 ? events.length : playbackCursor + 1;
+  const totalSteps  = events.length;
+
+  // ── Sidebar detail renderer ────────────────────────────────────────────────
+  const renderDetail = () => {
+    if (!selected) {
+      return (
+        <div className="side-empty">
+          <span className="side-empty-icon">🔍</span>
+          <div>Click a node in the graph<br />to inspect its payload</div>
+        </div>
+      );
+    }
+    const e = selected.event;
+    const p = (e as any).payload ?? {};
+    return (
+      <>
+        {/* Meta strip */}
+        <div className="trace-meta-strip">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span className={`kind-badge kind-${e.kind}`}>
+              {KIND_META[e.kind]?.icon} {KIND_META[e.kind]?.label ?? e.kind}
+            </span>
+            <span className={`status-badge status-${e.status}`}>
+              {e.status}
+            </span>
+          </div>
+          <div className="trace-meta-id">{e.spanId}</div>
+        </div>
+
+        <div className="detail-body">
+          {/* Metadata */}
+          <div className="detail-section">
+            <div className="detail-section-label">Span Info</div>
+            <div className="kv-grid">
+              {[
+                ["trace", e.traceId],
+                ["parent", e.parentSpanId ?? "— root"],
+                ["actor", `${(e as any).actor?.kind} · ${(e as any).actor?.name ?? (e as any).actor?.id}`],
+                ["time", new Date(e.occurredAt).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 })],
+              ].map(([k, v]) => (
+                <div className="kv-row" key={k}>
+                  <span className="kv-key">{k}</span>
+                  <span className="kv-val">{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Text content if present */}
+          {p.text && (
+            <div className="detail-section">
+              <div className="detail-section-label">Content</div>
+              <div className="kv-val-text">{p.text}</div>
+            </div>
+          )}
+          {p.message && (
+            <div className="detail-section">
+              <div className="detail-section-label">Message</div>
+              <div className="kv-val-text" style={{ color: "var(--red)" }}>
+                {p.message}
+              </div>
+            </div>
+          )}
+
+          <div className="divider" />
+
+          {/* Raw payload */}
+          <div className="detail-section">
+            <div className="detail-section-label">Raw Payload</div>
+            <pre className="code-block">
+              {JSON.stringify(p, null, 2)}
+            </pre>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="layout">
+      {/* Header */}
       <header className="header">
-        <div className="title">Agent Flight Recorder</div>
+        <div className="header-brand">
+          <div className="header-logo">✈</div>
+          <span className="title">Agent Flight Recorder</span>
+          <span className="title-badge">Phase 1</span>
+        </div>
+
         <div className="controls">
+          {/* Trace selector */}
           <label>
-            Trace
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Trace</span>
             <select
+              className="trace-select"
               value={traceId}
               onChange={(e) => setTraceId(e.target.value)}
             >
-              <option value="">(select)</option>
+              <option value="">— Select a trace —</option>
               {traces.map((t) => (
                 <option key={t.traceId} value={t.traceId}>
-                  {t.traceId} ({t.eventCount})
+                  {t.traceId.slice(0, 22)}…  ({t.eventCount} events)
                 </option>
               ))}
             </select>
           </label>
 
-          <label>
-            <input 
-              type="checkbox" 
-              checked={liveUpdating} 
-              onChange={(e) => setLiveUpdating(e.target.checked)} 
+          {/* Live toggle */}
+          <label className="live-toggle">
+            <input
+              type="checkbox"
+              checked={liveUpdating}
+              onChange={(e) => setLiveUpdating(e.target.checked)}
             />
-            {liveUpdating ? "🟢 Live updating" : "⚪ Paused"}
+            <span className={`live-dot ${liveUpdating ? "active" : ""}`} />
+            {liveUpdating ? "Live" : "Paused"}
           </label>
 
-          <button type="button" onClick={() => {
-            refreshTraces();
-            if (traceId) loadTrace(traceId);
-          }}>
-            Refresh Now
+          {/* Refresh */}
+          <button
+            className="btn btn-accent"
+            onClick={() => { refreshTraces(); if (traceId) loadTrace(traceId); }}
+          >
+            ↻ Refresh
           </button>
         </div>
       </header>
 
-      {error ? <div className="error">{error}</div> : null}
+      {/* Error bar */}
+      {error && (
+        <div className="error">⚠ {error}</div>
+      )}
 
+      {/* Body */}
       <main className="main">
+        {/* Graph canvas */}
         <section className="graph">
-          <div className="playback-controls" style={{ position: "absolute", zIndex: 10, padding: 10, background: "white", border: "1px solid #ccc", margin: 10, borderRadius: 5 }}>
-            <button 
-              disabled={playbackCursor <= 0 && playbackCursor !== -1} 
-              onClick={() => setPlaybackCursor(prev => prev === -1 ? events.length - 2 : prev - 1)}
+          {/* Playback controls */}
+          <div className="playback-controls">
+            <button
+              className="playback-btn"
+              disabled={currentStep <= 1}
+              onClick={() => setPlaybackCursor((p) => p === -1 ? events.length - 2 : p - 1)}
+              title="Step backward"
             >
-              Prev
+              ‹
             </button>
-            <span style={{ margin: "0 10px" }}>
-              {playbackCursor === -1 ? events.length : playbackCursor + 1} / {events.length}
-            </span>
-            <button 
-              disabled={playbackCursor === -1 || playbackCursor >= events.length - 1} 
-              onClick={() => setPlaybackCursor(prev => prev >= events.length - 1 ? -1 : prev + 1)}
+            <div className="playback-counter">
+              <span>{currentStep}</span> / {totalSteps}
+            </div>
+            <button
+              className="playback-btn"
+              disabled={playbackCursor === -1 || playbackCursor >= events.length - 1}
+              onClick={() => setPlaybackCursor((p) => p >= events.length - 1 ? -1 : p + 1)}
+              title="Step forward"
             >
-              Next
+              ›
             </button>
-            <button style={{ marginLeft: 10 }} onClick={() => setPlaybackCursor(-1)}>
-              Live (End)
+            <button
+              className="playback-live"
+              onClick={() => setPlaybackCursor(-1)}
+            >
+              LIVE
             </button>
           </div>
-          
+
           <ReactFlow
             nodes={graph.nodes}
             edges={graph.edges}
+            nodeTypes={nodeTypes}
             onNodeClick={(_, node) => {
               const event = events.find((e) => e.spanId === node.id);
               if (event) setSelected({ event });
             }}
             fitView
+            fitViewOptions={{ padding: 0.15 }}
+            minZoom={0.2}
+            maxZoom={2}
+            proOptions={{ hideAttribution: true }}
           >
-            <Background />
-            <Controls />
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={28}
+              size={1}
+              color="rgba(99,130,255,0.06)"
+            />
+            <Controls showInteractive={false} />
           </ReactFlow>
         </section>
 
+        {/* Sidebar */}
         <aside className="side">
-          <div className="panel">
-            <div className="panelTitle">Selection</div>
-            <div className="panelBody">
-              {selected ? (
-                <>
-                  <div className="kv">
-                    <div className="k">spanId</div>
-                    <div className="v">{selected.event.spanId}</div>
-                    <div className="k">kind</div>
-                    <div className="v">{selected.event.kind}</div>
-                    <div className="k">status</div>
-                    <div className="v">{selected.event.status}</div>
-                  </div>
-
-                  <div className="payloadTitle">Payload</div>
-                  <pre className="payload">
-                    {JSON.stringify(selected.event, null, 2)}
-                  </pre>
-                </>
-              ) : (
-                <div>Select a node to inspect payload.</div>
-              )}
-            </div>
+          <div className="side-header">
+            <span className="side-title">Inspector</span>
+            {activeMeta && (
+              <div className="trace-meta-row">
+                <span className="trace-stat">
+                  <span className="trace-stat-num">{activeMeta.eventCount}</span> events
+                </span>
+              </div>
+            )}
           </div>
+          {renderDetail()}
         </aside>
       </main>
     </div>
