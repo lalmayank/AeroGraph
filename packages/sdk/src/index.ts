@@ -183,4 +183,28 @@ export class FlightRecorder {
       links: []
     });
   }
+
+  async note(params: {
+    spanId?: string;
+    parentSpanId: string | null;
+    title?: string;
+    payload: Record<string, unknown>;
+    [key: string]: unknown;
+  }): Promise<TraceEvent> {
+    const spanId = params.spanId ?? this.createSpanId();
+    // Pull only the known schema fields; extra keys like chainName are not emitted top-level
+    const { spanId: _sid, parentSpanId, title, payload } = params;
+    return this.emit({
+      traceId: this.traceId,
+      spanId,
+      parentSpanId: parentSpanId as string | null,
+      occurredAt: new Date().toISOString(),
+      actor: { kind: "system", id: this.actor.id, name: this.actor.name },
+      kind: "note",
+      status: "ok",
+      title,
+      payload,
+      links: []
+    });
+  }
 }

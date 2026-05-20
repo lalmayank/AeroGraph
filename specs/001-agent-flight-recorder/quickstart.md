@@ -1,33 +1,44 @@
-# Quickstart — Agent Flight Recorder
+# Phase 1 MVP Quickstart & Smoke Checklist
 
-This is a developer-first local workflow quickstart.
+This document verifies the end-to-end functionality of the Agent Flight Recorder (Phase 1 MVP).
 
-## Prereqs
+## Running the Stack
 
-- Node.js (LTS)
-- `npm`
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-## Install
+2. **Start the Collector**
+   ```bash
+   npm run dev -w apps-collector
+   # Should output: "collector listening on http://localhost:4317"
+   ```
 
-- `npm install`
+3. **Start the Web UI** (In a new terminal)
+   ```bash
+   npm run dev -w apps-web
+   # Open the provided localhost URL in your browser
+   ```
 
-## Run (local)
+4. **Run the LangChain Demo** (In a new terminal)
+   ```bash
+   npm run dev -w apps-demo
+   # Simulates an LLM call and emits events to the collector
+   ```
 
-1) Start the collector:
-- `npm run dev -w apps/collector`
+## Smoke Test Checklist (T033)
 
-2) Start the web UI:
-- `npm run dev -w apps/web`
+- [ ] **Ingestion Works**: The `apps-demo` script runs without throwing errors, indicating `POST /v1/events` succeeded.
+- [ ] **Database Persists**: A new SQLite DB is created at `apps/collector/data/afr.sqlite`.
+- [ ] **Web UI Lists Traces**: The web UI dropdown populates with the newly ingested trace.
+- [ ] **Web UI Renders Graph**: Selecting the trace renders the nodes (prompt and response) in React Flow.
+- [ ] **Web UI Live Polling**: If you run `npm run dev -w apps-demo` again, the graph updates automatically (if "Live updating" is checked).
+- [ ] **Playback Controls**: Clicking "Prev" steps backward through the execution history deterministically.
+- [ ] **Payload Inspection**: Clicking a node shows its `spanId`, `kind`, and `payload` in the right panel.
 
-3) (Optional) Emit a demo trace:
-- `npm run dev -w apps/demo`
+## Architecture & Boundaries Verification (T034)
 
-## Verify
-
-- Collector health: `GET http://localhost:4317/health`
-- Trace list: `GET http://localhost:4317/v1/traces`
-
-## Notes
-
-- In Phase 1 MVP, persistence is targeted to SQLite (see data-model.md). The repo may also support a JSONL fallback for local development.
-- All event payloads and API shapes must stay aligned with `packages/contracts` (constitution Principles I–II).
+- **`@afr/contracts`**: Contains no imports from other packages.
+- **`apps/collector`**: Does not import from `apps/web`. Uses `@afr/contracts` for validation.
+- **Phase 1 Guardrails**: Phase 2 features (`forkTrace`, `diffTraces`, `analyze`) have been explicitly removed from the collector and web UI.

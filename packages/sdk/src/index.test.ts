@@ -32,4 +32,27 @@ describe("sdk: FlightRecorder", () => {
     expect(body.kind).toBe("prompt");
     expect(body.traceId).toBeTruthy();
   });
+
+  it("normalizes all event types correctly", async () => {
+    const { fetchFn, calls } = createMockFetch();
+    const fr = new FlightRecorder({
+      endpoint: "http://localhost:4317",
+      actor: { id: "agent-b" },
+      fetchFn
+    });
+
+    await fr.response({ parentSpanId: "s-1", text: "OK" });
+    await fr.toolCall({ parentSpanId: "s-1", toolId: "t1", input: { x: 1 } });
+    await fr.toolResult({ parentSpanId: "s-1", toolId: "t1", output: { y: 2 } });
+    await fr.error({ parentSpanId: "s-1", message: "Failed" });
+
+    expect(calls.length).toBe(4);
+    const kinds = calls.map(c => JSON.parse(String(c.init?.body)).kind);
+    expect(kinds).toEqual(["response", "tool_call", "tool_result", "error"]);
+    
+    // Check tool_call actor normalization
+    const toolCallBody = JSON.parse(String(calls[1].init?.body));
+    expect(toolCallBody.actor.kind).toBe("tool");
+    expect(toolCallBody.actor.id).toBe("t1");
+  });
 });

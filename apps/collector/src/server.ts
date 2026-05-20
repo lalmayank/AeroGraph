@@ -1,15 +1,21 @@
 import express from "express";
 import cors from "cors";
 import { validateTraceEvent } from "@afr/contracts";
-import { TraceStore } from "./store";
+import { getDatabase } from "./sqlite/db";
+import { runMigrations } from "./sqlite/migrate";
+import { SqliteTraceStore } from "./sqliteStore";
 
 const PORT = Number(process.env.PORT ?? 4317);
+const DB_PATH = process.env.AFR_DB_PATH ?? "data/afr.sqlite";
 
-const app = express();
+export const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
-const store = new TraceStore();
+const db = getDatabase(DB_PATH);
+runMigrations(db);
+const store = new SqliteTraceStore(db);
+
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -23,14 +29,14 @@ app.post("/v1/events", (req, res) => {
     for (const event of parsed) {
       store.appendEvent(event);
     }
-    res.status(204).send();
+    res.status(201).send();
   } catch (err: any) {
     res.status(400).json({ error: err?.message ?? String(err) });
   }
 });
 
 app.get("/v1/traces", (_req, res) => {
-  res.json({ traces: store.listTraces() });
+  res.json(store.listTraces());
 });
 
 app.get("/v1/traces/:traceId", (req, res) => {
@@ -43,43 +49,11 @@ app.get("/v1/traces/:traceId", (req, res) => {
   res.json(trace);
 });
 
-app.get("/v1/traces/:traceId/analysis", (req, res) => {
-  const analysis = store.analyze(req.params.traceId);
-  if (!analysis) {
-    res.status(404).json({ error: "Trace not found" });
-    return;
-  }
-  res.json(analysis);
-});
+// Removed forkTrace, diffTraces, and analyze endpoints per Phase 1 MVP constraints.
 
-app.post("/v1/traces/:traceId/fork", (req, res) => {
-  try {
-    const { forkFromSpanId, overrides } = req.body ?? {};
-    if (typeof forkFromSpanId !== "string" || forkFromSpanId.length === 0) {
-      res.status(400).json({ error: "forkFromSpanId is required" });
-      return;
-    }
-    const forked = store.forkTrace({
-      baseTraceId: req.params.traceId,
-      forkFromSpanId,
-      overrides
-    });
-    res.status(201).json({ traceId: forked.meta.traceId });
-  } catch (err: any) {
-    res.status(400).json({ error: err?.message ?? String(err) });
-  }
-});
-
-app.get("/v1/traces/:aId/diff/:bId", (req, res) => {
-  const diff = store.diffTraces(req.params.aId, req.params.bId);
-  if (!diff) {
-    res.status(404).json({ error: "Trace not found" });
-    return;
-  }
-  res.json(diff);
-});
-
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`collector listening on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`collector listening on http://localhost:${PORT}`);
+  });
+}

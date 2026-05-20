@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @afr/contracts -w @afr/sdk -w apps-collector -w apps-demo -w apps-web",
+    "build": "npm run build -w @afr/contracts -w @afr/sdk -w @afr/adapter-langchain -w apps-collector -w apps-demo -w apps-web",
     "dev": "npm run --workspaces dev",
-    "test": "npm run build -w @afr/contracts -w @afr/sdk && npm run --workspaces test",
+    "test": "npm run build -w @afr/contracts -w @afr/sdk -w @afr/adapter-langchain && npm run --workspaces test",
     "lint": "npm run --workspaces lint"
   }
 }
