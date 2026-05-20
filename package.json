@@ -1,0 +1,14 @@
+{
+  "name": "agent-flight-recorder",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @afr/contracts -w @afr/sdk -w apps-collector -w apps-demo -w apps-web",
+    "dev": "npm run --workspaces dev",
+    "test": "npm run build -w @afr/contracts -w @afr/sdk && npm run --workspaces test",
+    "lint": "npm run --workspaces lint"
+  }
+}

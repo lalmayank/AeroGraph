@@ -1,0 +1,150 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: #0f172a;
+}
+
+#root {
+    height: 100%;
+}
+
+.layout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    background: #ffffff;
+}
+
+.title {
+    font-weight: 700;
+}
+
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.controls label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+}
+
+.controls select {
+    padding: 4px 6px;
+}
+
+.controls button {
+    padding: 6px 10px;
+}
+
+.error {
+    padding: 8px 12px;
+    color: #991b1b;
+    background: #fee2e2;
+    border-bottom: 1px solid #fecaca;
+}
+
+.main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    min-height: 0;
+}
+
+.graph {
+    min-height: 0;
+}
+
+.side {
+    border-left: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 10px;
+    overflow: auto;
+}
+
+.panel {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.panelTitle {
+    padding: 10px 10px 0 10px;
+    font-weight: 700;
+}
+
+.panelBody {
+    padding: 10px;
+    font-size: 12px;
+}
+
+.kv {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.k {
+    color: #475569;
+}
+
+.v {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+}
+
+.payloadTitle {
+    margin-top: 10px;
+    font-weight: 700;
+}
+
+.payload {
+    font-size: 11px;
+    overflow: auto;
+    background: #0b1220;
+    color: #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.fork {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.forkTitle {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.forkLabel {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 70px;
+    padding: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+}
