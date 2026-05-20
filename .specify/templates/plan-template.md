@@ -40,7 +40,12 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Event schema is the source of truth (schema drives contracts/types/storage/UI).
+- No UI logic bypasses shared contracts.
+- Adapters emit normalized trace events with a deterministic mapping.
+- Implementation preserves trace replayability (no silent data loss).
+- Tests are included and required for schema, adapters, and replay behavior.
+- Unclear requirements are marked NEEDS CLARIFICATION (do not invent APIs).
 
 ## Project Structure
 
