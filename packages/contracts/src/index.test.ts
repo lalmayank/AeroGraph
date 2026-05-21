@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { traceEventSchema, traceEventSchemaVersion, validateTraceEvent, validateTraceWithMeta } from "./index";
+import {
+  sortTraceEventsDeterministic,
+  traceDiffResultSchema,
+  traceEventSchema,
+  traceEventSchemaVersion,
+  traceForkRequestSchema,
+  traceForkResponseSchema,
+  traceLineageGraphSchema,
+  validateTraceEvent,
+  validateTraceWithMeta
+} from "./index";
 
 describe("contracts: traceEventSchema", () => {
   it("accepts a valid event", () => {
@@ -53,5 +63,77 @@ describe("contracts: API shapes", () => {
       rootSpanId: "s-1"
     };
     expect(() => validateTraceWithMeta({ meta, events: [] })).not.toThrow();
+  });
+});
+
+describe("contracts: deterministic ordering", () => {
+  it("sortTraceEventsDeterministic is stable when timestamps collide", () => {
+    const occurredAt = "2026-05-20T00:00:00.000Z";
+    const events = [
+      { occurredAt, spanId: "s2", kind: "response" },
+      { occurredAt, spanId: "s1", kind: "response" },
+      { occurredAt, spanId: "s1", kind: "prompt" }
+    ] as any;
+
+    const sorted = sortTraceEventsDeterministic(events);
+    expect(sorted.map((e: any) => `${e.spanId}:${e.kind}`)).toEqual([
+      "s1:prompt",
+      "s1:response",
+      "s2:response"
+    ]);
+  });
+});
+
+describe("contracts: Phase 2 shapes", () => {
+  it("parses TraceForkRequest + TraceForkResponse", () => {
+    expect(() =>
+      traceForkRequestSchema.parse({ forkFromSpanId: "s-10", overrides: { promptText: "override" } })
+    ).not.toThrow();
+    expect(() => traceForkResponseSchema.parse({ traceId: "t_child" })).not.toThrow();
+  });
+
+  it("parses TraceLineageGraph", () => {
+    const node = {
+      traceId: "t-1",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      eventCount: 1,
+      rootSpanId: "s-1"
+    };
+
+    expect(() =>
+      traceLineageGraphSchema.parse({
+        rootTraceId: "t-1",
+        nodes: [node],
+        edges: [
+          {
+            parentTraceId: "t-1",
+            childTraceId: "t-2",
+            forkedFromSpanId: "s-1",
+            createdAt: new Date().toISOString(),
+            overrides: { promptText: "x" }
+          }
+        ]
+      })
+    ).not.toThrow();
+  });
+
+  it("parses TraceDiffResult divergence metadata (additive)", () => {
+    const meta = {
+      traceId: "t-1",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      eventCount: 1,
+      rootSpanId: "s-1"
+    };
+
+    expect(() =>
+      traceDiffResultSchema.parse({
+        a: meta,
+        b: { ...meta, traceId: "t-2" },
+        divergence: { forkPointSpanId: "s-1", aIndex: 0, bIndex: 0, reason: "first change" },
+        changed: [{ index: 0, aSpanId: "s-1", bSpanId: "s-1", reason: "payload" }]
+      })
+    ).not.toThrow();
   });
 });

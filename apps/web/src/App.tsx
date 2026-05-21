@@ -7,9 +7,12 @@ import ReactFlow, {
   type Node,
   type Edge,
 } from "reactflow";
-import { type TraceEvent, type TraceMeta } from "@afr/contracts";
+import { sortTraceEventsDeterministic, type TraceEvent, type TraceLineageGraph, type TraceMeta, type TraceDiffResult, type TraceAnalysis } from "@afr/contracts";
 import { createApi } from "./api";
-import { buildGraph, computePlaybackState } from "./graph";
+import { buildGraph, computePlaybackState, applyDiffHighlighting, applyLoopHighlighting } from "./graph";
+import { buildLineageBreadcrumb, getForkPointSpanId, listSiblingTraceIds } from "./lineage";
+import { getDiffChangedSpanIds } from "./diff";
+import { getLoopWarningSpanIds, getFirstLoopSpanId } from "./loops";
 
 // ─── Kind icons + colors ───────────────────────────────────────────────────────
 const KIND_META: Record<string, { icon: string; label: string }> = {
@@ -115,7 +118,9 @@ const nodeTypes: NodeTypes = { afrNode: TraceNode };
 // ─── Graph builder override (uses custom node type) ───────────────────────────
 function buildPremiumGraph(
   events: TraceEvent[],
-  selectedSpanId: string | null
+  selectedSpanId: string | null,
+  diffSpanIds?: Set<string>,
+  loopSpanIds?: Set<string>
 ): { nodes: Node[]; edges: Edge[] } {
   const base = buildGraph(events);
   const spacing = { x: 270, y: 140 };
@@ -162,12 +167,20 @@ function buildPremiumGraph(
     }
   });
 
-  const nodes: Node[] = events.map((event) => ({
+  let finalNodes: Node[] = events.map((event) => ({
     id: event.spanId,
     position: positions[event.spanId] ?? { x: 0, y: 0 },
     type: "afrNode",
     data: { event, selected: event.spanId === selectedSpanId },
   }));
+
+  // Apply diff and loop highlighting (deterministic: based on set membership)
+  if (diffSpanIds && diffSpanIds.size > 0) {
+    finalNodes = applyDiffHighlighting(finalNodes, diffSpanIds);
+  }
+  if (loopSpanIds && loopSpanIds.size > 0) {
+    finalNodes = applyLoopHighlighting(finalNodes, loopSpanIds);
+  }
 
   const edges: Edge[] = base.edges.map((e) => ({
     ...e,
@@ -184,7 +197,7 @@ function buildPremiumGraph(
     },
   }));
 
-  return { nodes, edges };
+  return { nodes: finalNodes, edges };
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
@@ -197,10 +210,17 @@ export default function App() {
   const [traceId, setTraceId]         = useState<string>("");
   const [activeMeta, setActiveMeta]   = useState<TraceMeta | null>(null);
   const [events, setEvents]           = useState<TraceEvent[]>([]);
+  const [lineage, setLineage]         = useState<TraceLineageGraph | null>(null);
   const [selected, setSelected]       = useState<Selected | null>(null);
   const [error, setError]             = useState<string>("");
   const [liveUpdating, setLiveUpdating] = useState(true);
   const [playbackCursor, setPlaybackCursor] = useState<number>(-1);
+  const [diffResult, setDiffResult]   = useState<TraceDiffResult | null>(null);
+  const [compareTargetId, setCompareTargetId] = useState<string>("");
+  const [analysis, setAnalysis]       = useState<TraceAnalysis | null>(null);
+
+  const diffSpanIds = useMemo(() => diffResult ? getDiffChangedSpanIds(diffResult) : new Set<string>(), [diffResult]);
+  const loopSpanIds = useMemo(() => analysis ? getLoopWarningSpanIds(analysis) : new Set<string>(), [analysis]);
 
   const visibleEvents = useMemo(() => {
     if (playbackCursor === -1 || playbackCursor >= events.length) return events;
@@ -208,8 +228,8 @@ export default function App() {
   }, [events, playbackCursor]);
 
   const graph = useMemo(
-    () => buildPremiumGraph(visibleEvents, selected?.event.spanId ?? null),
-    [visibleEvents, selected]
+    () => buildPremiumGraph(visibleEvents, selected?.event.spanId ?? null, diffSpanIds, loopSpanIds),
+    [visibleEvents, selected, diffSpanIds, loopSpanIds]
   );
 
   const refreshTraces = useCallback(async () => {
@@ -229,11 +249,22 @@ export default function App() {
     if (!id) return;
     try {
       setError("");
-      const trace = await api.getTrace(id);
+      setDiffResult(null);
+      setCompareTargetId("");
+      const [trace, lineageGraph, analysisResult] = await Promise.all([
+        api.getTrace(id),
+        api.getLineage(id).catch(() => null),
+        api.getAnalysis(id).catch(() => null)
+      ]);
       setActiveMeta(trace.meta);
-      setEvents((prev) => {
-        if (prev.length !== trace.events.length) return trace.events;
-        return prev;
+      setLineage(lineageGraph);
+      setEvents(trace.events);
+      setAnalysis(analysisResult);
+      setPlaybackCursor((prev) => {
+        if (prev === -1) return -1;
+        const maxIndex = trace.events.length - 1;
+        if (maxIndex < 0) return -1;
+        return Math.min(prev, maxIndex);
       });
     } catch (e: any) {
       setError(e?.message ?? String(e));
@@ -243,7 +274,6 @@ export default function App() {
   useEffect(() => { refreshTraces(); }, []);
   useEffect(() => {
     loadTrace(traceId);
-    setPlaybackCursor(-1);
     setSelected(null);
   }, [traceId]);
 
@@ -259,6 +289,39 @@ export default function App() {
 
   const currentStep = playbackCursor === -1 ? events.length : playbackCursor + 1;
   const totalSteps  = events.length;
+
+  const forkPointSpanId = useMemo(() => {
+    if (activeMeta?.derivedFrom?.forkedFromSpanId) return activeMeta.derivedFrom.forkedFromSpanId;
+    if (lineage && traceId) return getForkPointSpanId(lineage, traceId);
+    return null;
+  }, [activeMeta, lineage, traceId]);
+
+  const jumpToForkPoint = useCallback(() => {
+    if (!forkPointSpanId) return;
+    const sorted = sortTraceEventsDeterministic(events);
+    const idx = sorted.findIndex((e) => e.spanId === forkPointSpanId);
+    if (idx >= 0) setPlaybackCursor(idx);
+  }, [events, forkPointSpanId]);
+
+  const loadDiff = useCallback(async (compareId: string) => {
+    if (!traceId || !compareId) return;
+    try {
+      setError("");
+      const result = await api.getDiff(traceId, compareId);
+      setDiffResult(result);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    }
+  }, [api, traceId]);
+
+  const jumpToFirstLoop = useCallback(() => {
+    if (!analysis) return;
+    const firstSpanId = getFirstLoopSpanId(analysis);
+    if (!firstSpanId) return;
+    const sorted = sortTraceEventsDeterministic(events);
+    const idx = sorted.findIndex((e) => e.spanId === firstSpanId);
+    if (idx >= 0) setPlaybackCursor(idx);
+  }, [analysis, events]);
 
   // ── Sidebar detail renderer ────────────────────────────────────────────────
   const renderDetail = () => {
@@ -344,7 +407,7 @@ export default function App() {
         <div className="header-brand">
           <div className="header-logo">✈</div>
           <span className="title">Agent Flight Recorder</span>
-          <span className="title-badge">Phase 1</span>
+          <span className="title-badge">Phase 2</span>
         </div>
 
         <div className="controls">
@@ -450,6 +513,198 @@ export default function App() {
 
         {/* Sidebar */}
         <aside className="side">
+          <div className="side-header">
+            <span className="side-title">Lineage</span>
+            {forkPointSpanId && (
+              <button className="btn" onClick={jumpToForkPoint}>
+                Jump to fork
+              </button>
+            )}
+          </div>
+          <div
+            style={{
+              padding: "14px 16px",
+              borderBottom: "1px solid var(--border-subtle)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12
+            }}
+          >
+            <div>
+              <div className="detail-section-label">Breadcrumb</div>
+              {!lineage || !traceId ? (
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {buildLineageBreadcrumb(lineage, traceId).map((id) => (
+                    <button
+                      key={id}
+                      className="btn"
+                      disabled={id === traceId}
+                      onClick={() => setTraceId(id)}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      title={id}
+                    >
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="detail-section-label">Siblings</div>
+              {!lineage || !traceId ? (
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {listSiblingTraceIds(lineage, traceId).length === 0 ? (
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>None</div>
+                  ) : (
+                    listSiblingTraceIds(lineage, traceId).map((id) => (
+                      <button
+                        key={id}
+                        className="btn"
+                        onClick={() => setTraceId(id)}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        title={id}
+                      >
+                        {id}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="detail-section-label">Derived From</div>
+              {!activeMeta?.derivedFrom ? (
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6
+                  }}
+                >
+                  <div>base: {activeMeta.derivedFrom.baseTraceId}</div>
+                  <div>forkSpan: {activeMeta.derivedFrom.forkedFromSpanId}</div>
+                </div>
+              )}
+            </div>
+
+            {/* T032: Diff compare UI */}
+            <div>
+              <div className="detail-section-label">Compare with</div>
+              {!lineage || !traceId ? (
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+              ) : (
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <select
+                    id="diff-compare-select"
+                    className="trace-select"
+                    value={compareTargetId}
+                    onChange={(e) => setCompareTargetId(e.target.value)}
+                    style={{ fontSize: 11 }}
+                  >
+                    <option value="">— pick a branch —</option>
+                    {lineage.nodes
+                      .filter((n) => n.traceId !== traceId)
+                      .map((n) => (
+                        <option key={n.traceId} value={n.traceId}>
+                          {n.traceId.slice(0, 18)}…
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    className="btn btn-accent"
+                    disabled={!compareTargetId}
+                    onClick={() => loadDiff(compareTargetId)}
+                    style={{ fontSize: 11, padding: "4px 10px" }}
+                  >
+                    Diff
+                  </button>
+                  {diffResult && (
+                    <button
+                      className="btn"
+                      onClick={() => setDiffResult(null)}
+                      style={{ fontSize: 11 }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
+              {diffResult && (
+                <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-secondary)" }}>
+                  {diffResult.changed.length === 0
+                    ? "✓ No differences"
+                    : `${diffResult.changed.length} change${diffResult.changed.length !== 1 ? "s" : ""}`}
+                  {diffResult.divergence?.forkPointSpanId && (
+                    <div style={{ marginTop: 4 }}>
+                      Diverges at: <code style={{ fontSize: 10 }}>{diffResult.divergence.forkPointSpanId}</code>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* T044: Loop warnings panel */}
+          <div className="side-header">
+            <span className="side-title">Loop Warnings</span>
+            {analysis && analysis.loops.length > 0 && (
+              <button className="btn" onClick={jumpToFirstLoop} style={{ fontSize: 11 }}>
+                Jump to first
+              </button>
+            )}
+          </div>
+          <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-subtle)" }}>
+            {!analysis || analysis.loops.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>No loop warnings detected</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {analysis.loops.map((w, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: "rgba(139,92,246,0.08)",
+                      border: "1px solid rgba(139,92,246,0.25)",
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      fontSize: 11
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                      <span style={{
+                        fontSize: 9,
+                        padding: "2px 6px",
+                        borderRadius: 3,
+                        background: w.severity === "high" ? "rgba(239,68,68,0.2)" : w.severity === "medium" ? "rgba(245,158,11,0.2)" : "rgba(139,92,246,0.2)",
+                        color: w.severity === "high" ? "#ef4444" : w.severity === "medium" ? "#f59e0b" : "#8b5cf6",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em"
+                      }}>
+                        {w.severity}
+                      </span>
+                      <span style={{ color: "rgba(148,163,184,0.7)", fontSize: 9 }}>{w.kind}</span>
+                    </div>
+                    <div style={{ color: "var(--text-secondary)", lineHeight: 1.4 }}>{w.reason}</div>
+                    <div style={{ marginTop: 4, color: "rgba(148,163,184,0.5)", fontSize: 9 }}>
+                      {w.spanIds.length} span{w.spanIds.length !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="side-header">
             <span className="side-title">Inspector</span>
             {activeMeta && (

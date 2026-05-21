@@ -142,6 +142,8 @@ export type TraceListResponse = z.infer<typeof traceListResponseSchema>;
 export const traceAnalysisSchema = z.object({
   loops: z.array(
     z.object({
+      kind: z.enum(["repeated_sequence", "recursive_tool", "handoff_cycle"]).optional(),
+      severity: z.enum(["low", "medium", "high"]).optional(),
       reason: z.string().min(1),
       spanIds: z.array(z.string().min(1))
     })
@@ -159,9 +161,52 @@ export const traceAnalysisSchema = z.object({
 });
 export type TraceAnalysis = z.infer<typeof traceAnalysisSchema>;
 
+export const traceForkRequestSchema = z.object({
+  forkFromSpanId: z.string().min(1),
+  overrides: z
+    .object({
+      promptText: z.string().min(1).optional()
+    })
+    .optional()
+});
+export type TraceForkRequest = z.infer<typeof traceForkRequestSchema>;
+
+export const traceForkResponseSchema = z.object({
+  traceId: z.string().min(1)
+});
+export type TraceForkResponse = z.infer<typeof traceForkResponseSchema>;
+
+export const traceLineageEdgeSchema = z.object({
+  parentTraceId: z.string().min(1),
+  childTraceId: z.string().min(1),
+  forkedFromSpanId: z.string().min(1),
+  createdAt: z.string().datetime(),
+  overrides: z
+    .object({
+      promptText: z.string().min(1).optional()
+    })
+    .optional()
+});
+export type TraceLineageEdge = z.infer<typeof traceLineageEdgeSchema>;
+
+export const traceLineageGraphSchema = z.object({
+  rootTraceId: z.string().min(1),
+  nodes: z.array(traceMetaSchema),
+  edges: z.array(traceLineageEdgeSchema)
+});
+export type TraceLineageGraph = z.infer<typeof traceLineageGraphSchema>;
+
 export const traceDiffResultSchema = z.object({
   a: traceMetaSchema,
   b: traceMetaSchema,
+  divergence: z
+    .object({
+      forkPointSpanId: z.string().min(1).optional(),
+      aIndex: z.number().int().nonnegative().optional(),
+      bIndex: z.number().int().nonnegative().optional(),
+      reason: z.string().min(1).optional()
+    })
+    .optional(),
   changed: z.array(
     z.object({
       index: z.number().int().nonnegative(),
@@ -173,6 +218,23 @@ export const traceDiffResultSchema = z.object({
 });
 export type TraceDiffResult = z.infer<typeof traceDiffResultSchema>;
 
+export function compareTraceEvents(
+  a: Pick<TraceEvent, "occurredAt" | "spanId" | "kind">,
+  b: Pick<TraceEvent, "occurredAt" | "spanId" | "kind">
+): number {
+  const t = a.occurredAt.localeCompare(b.occurredAt);
+  if (t !== 0) return t;
+  const s = a.spanId.localeCompare(b.spanId);
+  if (s !== 0) return s;
+  return a.kind.localeCompare(b.kind);
+}
+
+export function sortTraceEventsDeterministic<T extends Pick<TraceEvent, "occurredAt" | "spanId" | "kind">>(
+  events: readonly T[]
+): T[] {
+  return [...events].sort(compareTraceEvents);
+}
+
 export function validateTraceEvent(input: unknown): TraceEvent {
   return traceEventSchema.parse(input);
 }
@@ -183,4 +245,24 @@ export function validateTrace(input: unknown): Trace {
 
 export function validateTraceWithMeta(input: unknown): TraceWithMeta {
   return traceWithMetaSchema.parse(input);
+}
+
+export function validateTraceForkRequest(input: unknown): TraceForkRequest {
+  return traceForkRequestSchema.parse(input);
+}
+
+export function validateTraceForkResponse(input: unknown): TraceForkResponse {
+  return traceForkResponseSchema.parse(input);
+}
+
+export function validateTraceLineageGraph(input: unknown): TraceLineageGraph {
+  return traceLineageGraphSchema.parse(input);
+}
+
+export function validateTraceDiffResult(input: unknown): TraceDiffResult {
+  return traceDiffResultSchema.parse(input);
+}
+
+export function validateTraceAnalysis(input: unknown): TraceAnalysis {
+  return traceAnalysisSchema.parse(input);
 }

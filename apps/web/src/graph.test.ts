@@ -60,4 +60,24 @@ describe("web: graph utilities", () => {
       "s2:response"
     ]);
   });
+
+  // T046: regression — ordering uses @afr/contracts helper (sortTraceEventsDeterministic)
+  it("computePlaybackState produces same result regardless of input order", () => {
+    const events = [
+      { occurredAt: "2026-05-20T00:00:02.000Z", spanId: "s3", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:00.000Z", spanId: "s1", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:01.000Z", spanId: "s2", kind: "note" }
+    ] as any;
+
+    const shuffled = [
+      { occurredAt: "2026-05-20T00:00:01.000Z", spanId: "s2", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:02.000Z", spanId: "s3", kind: "note" },
+      { occurredAt: "2026-05-20T00:00:00.000Z", spanId: "s1", kind: "note" }
+    ] as any;
+
+    const r1 = computePlaybackState(events, 2);
+    const r2 = computePlaybackState(shuffled, 2);
+
+    expect(r1.map((e: any) => e.spanId)).toEqual(r2.map((e: any) => e.spanId));
+  });
 });

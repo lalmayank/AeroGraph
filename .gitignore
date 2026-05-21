@@ -10,4 +10,5 @@ apps/collector/data/
 Thumbs.db
 *.tmp
 *.swp
+.vscode/
 .idea/

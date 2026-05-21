@@ -1,27 +1,83 @@
 # Agent Flight Recorder
 
-An open-source flight recorder for AI agent workflows.
+An open-source flight recorder for AI agent workflows — local-first, append-only, and replay-safe.
 
 ## What it does
 
-- Captures **prompts**, **responses**, **tool calls**, and **agent handoffs** as normalized trace events
+**Phase 1 — Core Tracing**
+- Captures **prompts**, **responses**, **tool calls**, **agent handoffs**, and **errors** as normalized trace events
 - Stores traces in a replay-safe, append-only SQLite store
-- Visualizes traces as an interactive **trace graph** with payload inspection and failure highlighting
+- Visualizes traces as an interactive **trace graph** with payload inspection, failure highlighting, and playback timeline
+
+**Phase 2 — Branching, Diff, and Loop Detection**
+- **Fork traces**: create derived traces from any span (append-only, parent immutable)
+- **Lineage navigation**: breadcrumb, sibling list, derivedFrom — navigate the branch tree in the UI
+- **Deterministic diff**: compare two lineage-related traces with Myers diff; divergence highlighted on the graph
+- **Loop detection**: automatically detects repeated sequences, recursive tool usage, and multi-agent handoff cycles
+- All outputs validated through shared contracts (`@afr/contracts`); no schema bypasses
 
 ## Repository structure
 
 - `packages/contracts`: event schema + shared contracts (source of truth)
 - `packages/sdk`: reference SDK for emitting normalized trace events
 - `packages/adapter-langchain`: MVP adapter for LangChain workflows
-- `apps/collector`: trace event ingest + SQLite storage
-- `apps/web`: interactive trace graph UI
-- `apps/demo`: LangChain integration smoke test
+- `apps/collector`: trace ingest + SQLite storage + lineage/diff/analysis endpoints
+- `apps/web`: interactive trace graph UI with lineage panel, diff overlay, and loop warnings
+- `apps/demo`: demo emitter + Phase 2 smoke demo
 
 ## Development
 
 Requirements: Node.js (LTS)
 
-- Install: `npm install`
-- Start collector: `npm run dev -w apps/collector`
-- Start web UI: `npm run dev -w apps/web`
-- Run tests: `npm test`
+```sh
+npm install
+
+# Start collector (http://localhost:4317):
+npm run dev -w apps/collector
+
+# Start web UI (http://localhost:5173):
+npm run dev -w apps/web
+
+# Run tests:
+npm test
+
+# Build:
+npm run build
+```
+
+## Phase 2 Quick Start
+
+```sh
+# 1. Start collector
+npm run dev -w apps/collector
+
+# 2. Emit a demo trace
+npx tsx apps/demo/src/demo.ts
+
+# 3. Run the full Phase 2 smoke demo (fork → diff → analysis)
+npx tsx apps/demo/src/phase2-demo.ts
+
+# 4. Open UI
+open http://localhost:5173
+```
+
+## Phase 2 API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `POST /v1/events` | POST | Ingest trace events |
+| `GET /v1/traces` | GET | List traces |
+| `GET /v1/traces/:id` | GET | Get trace + meta |
+| `POST /v1/traces/:id/fork` | POST | Fork a trace at a span |
+| `GET /v1/traces/:id/lineage` | GET | Lineage graph |
+| `GET /v1/traces/:aId/diff/:bId` | GET | Lineage-aware deterministic diff |
+| `GET /v1/traces/:id/analysis` | GET | Loop warnings + failure analysis |
+
+## Architecture
+
+- **No distributed infrastructure**: no queues, no collectors, no Kubernetes — all local SQLite
+- **Contract-first**: all API shapes defined in `@afr/contracts` (Zod); validated on every ingress/egress
+- **Append-only**: events and lineage edges are never mutated; forking copies prefix events
+- **Deterministic**: ordering, diff, and loop analysis produce the same result for the same input
+
+See `specs/002-trace-branching/` for Phase 2 design artifacts.
