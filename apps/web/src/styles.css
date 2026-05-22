@@ -267,6 +267,27 @@ html, body {
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
+.btn-fork {
+  background: rgba(167, 139, 250, 0.1);
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #c4b5fd;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  width: 100%;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.18s;
+}
+
+.btn-fork:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: #a78bfa;
+  color: white;
+  box-shadow: 0 0 14px rgba(139,92,246,0.4);
+}
+
 .btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -324,12 +345,33 @@ html, body {
 }
 
 .react-flow__edge-path {
-  stroke: var(--accent) !important;
-  stroke-opacity: 0.5 !important;
+  stroke: var(--accent-light) !important;
+  stroke-opacity: 0.8 !important;
+  stroke-width: 2px !important;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
   stroke-opacity: 1 !important;
+}
+
+/* Diff highlight: amber pulse on changed nodes */
+.node-diff-highlight {
+  animation: diff-pulse 2s ease-in-out infinite;
+}
+
+@keyframes diff-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(245,158,11,0.25), 0 0 18px rgba(245,158,11,0.45); }
+  50%       { box-shadow: 0 0 0 5px rgba(245,158,11,0.4),  0 0 28px rgba(245,158,11,0.65); }
+}
+
+/* Loop highlight: purple pulse on flagged nodes */
+.node-loop-highlight {
+  animation: loop-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes loop-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(139,92,246,0.3), 0 0 20px rgba(139,92,246,0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(139,92,246,0.5), 0 0 32px rgba(139,92,246,0.7); }
 }
 
 .react-flow__controls {

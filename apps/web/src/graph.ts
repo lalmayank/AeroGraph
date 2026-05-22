@@ -1,5 +1,5 @@
 import { sortTraceEventsDeterministic, type TraceEvent } from "@afr/contracts";
-import type { Node, Edge } from "reactflow";
+import { MarkerType, type Node, type Edge } from "reactflow";
 
 export function buildGraph(events: TraceEvent[]): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
@@ -29,7 +29,15 @@ export function buildGraph(events: TraceEvent[]): { nodes: Node[]; edges: Edge[]
       edges.push({
         id: `e-${event.parentSpanId}-${event.spanId}`,
         source: event.parentSpanId,
-        target: event.spanId
+        target: event.spanId,
+        animated: true,
+        style: { stroke: "rgba(99,102,241,0.75)", strokeWidth: 2.5 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "rgba(129,140,248,0.9)",
+          width: 16,
+          height: 16
+        }
       });
     }
 
@@ -57,11 +65,12 @@ export function applyDiffHighlighting(
     if (!changedSpanIds.has(node.id)) return node;
     return {
       ...node,
+      className: (node.className ?? "") + " node-diff-highlight",
       style: {
         ...node.style,
-        border: "2px solid #f59e0b",
-        background: "rgba(245,158,11,0.12)",
-        boxShadow: "0 0 10px rgba(245,158,11,0.3)"
+        border: "2.5px solid #f59e0b",
+        background: "rgba(245,158,11,0.18)",
+        boxShadow: "0 0 0 3px rgba(245,158,11,0.25), 0 0 18px rgba(245,158,11,0.45)"
       }
     };
   });
@@ -80,11 +89,12 @@ export function applyLoopHighlighting(
     if (!loopSpanIds.has(node.id)) return node;
     return {
       ...node,
+      className: (node.className ?? "") + " node-loop-highlight",
       style: {
         ...node.style,
-        border: "2px solid #8b5cf6",
-        background: "rgba(139,92,246,0.12)",
-        boxShadow: "0 0 10px rgba(139,92,246,0.3)"
+        border: "2.5px solid #a78bfa",
+        background: "rgba(139,92,246,0.18)",
+        boxShadow: "0 0 0 3px rgba(139,92,246,0.3), 0 0 20px rgba(139,92,246,0.5)"
       }
     };
   });

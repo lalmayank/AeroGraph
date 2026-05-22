@@ -3,6 +3,7 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Controls,
+  MarkerType,
   type NodeTypes,
   type Node,
   type Edge,
@@ -186,14 +187,14 @@ function buildPremiumGraph(
     ...e,
     animated: true,
     style: {
-      stroke: "rgba(99,102,241,0.45)",
-      strokeWidth: 1.5,
+      stroke: "rgba(129,140,248,0.85)",
+      strokeWidth: 2.5,
     },
     markerEnd: {
-      type: "arrowclosed" as any,
-      color: "rgba(99,102,241,0.55)",
-      width: 14,
-      height: 14,
+      type: MarkerType.ArrowClosed,
+      color: "rgba(129,140,248,0.9)",
+      width: 16,
+      height: 16,
     },
   }));
 
@@ -218,6 +219,7 @@ export default function App() {
   const [diffResult, setDiffResult]   = useState<TraceDiffResult | null>(null);
   const [compareTargetId, setCompareTargetId] = useState<string>("");
   const [analysis, setAnalysis]       = useState<TraceAnalysis | null>(null);
+  const [forkInProgress, setForkInProgress] = useState(false);
 
   const diffSpanIds = useMemo(() => diffResult ? getDiffChangedSpanIds(diffResult) : new Set<string>(), [diffResult]);
   const loopSpanIds = useMemo(() => analysis ? getLoopWarningSpanIds(analysis) : new Set<string>(), [analysis]);
@@ -323,6 +325,23 @@ export default function App() {
     if (idx >= 0) setPlaybackCursor(idx);
   }, [analysis, events]);
 
+  // ── Fork from a specific span ─────────────────────────────────────────────
+  const doForkFromSpan = useCallback(async (spanId: string) => {
+    if (!traceId || forkInProgress) return;
+    setForkInProgress(true);
+    try {
+      setError("");
+      const res = await api.forkTrace(traceId, { forkFromSpanId: spanId });
+      // Refresh trace list then switch to new child trace
+      await refreshTraces();
+      setTraceId(res.traceId);
+    } catch (e: any) {
+      setError(`Fork failed: ${e?.message ?? String(e)}`);
+    } finally {
+      setForkInProgress(false);
+    }
+  }, [api, traceId, forkInProgress, refreshTraces]);
+
   // ── Sidebar detail renderer ────────────────────────────────────────────────
   const renderDetail = () => {
     if (!selected) {
@@ -384,6 +403,21 @@ export default function App() {
               </div>
             </div>
           )}
+
+          <div className="divider" />
+
+          {/* Fork from this span */}
+          <div className="detail-section">
+            <div className="detail-section-label">Actions</div>
+            <button
+              className="btn btn-fork"
+              disabled={forkInProgress}
+              onClick={() => doForkFromSpan(e.spanId)}
+              title={`Fork trace from span ${e.spanId}`}
+            >
+              {forkInProgress ? "Forking…" : "⑂ Fork from here"}
+            </button>
+          </div>
 
           <div className="divider" />
 
@@ -542,10 +576,10 @@ export default function App() {
                       className="btn"
                       disabled={id === traceId}
                       onClick={() => setTraceId(id)}
-                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      style={{ fontFamily: "'JetBrains Mono', monospace", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                       title={id}
                     >
-                      {id}
+                      {id.slice(0, 14)}…
                     </button>
                   ))}
                 </div>
@@ -601,45 +635,64 @@ export default function App() {
             {/* T032: Diff compare UI */}
             <div>
               <div className="detail-section-label">Compare with</div>
-              {!lineage || !traceId ? (
+              {!traceId ? (
                 <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
-              ) : (
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <select
-                    id="diff-compare-select"
-                    className="trace-select"
-                    value={compareTargetId}
-                    onChange={(e) => setCompareTargetId(e.target.value)}
-                    style={{ fontSize: 11 }}
-                  >
-                    <option value="">— pick a branch —</option>
-                    {lineage.nodes
-                      .filter((n) => n.traceId !== traceId)
-                      .map((n) => (
-                        <option key={n.traceId} value={n.traceId}>
-                          {n.traceId.slice(0, 18)}…
-                        </option>
-                      ))}
-                  </select>
-                  <button
-                    className="btn btn-accent"
-                    disabled={!compareTargetId}
-                    onClick={() => loadDiff(compareTargetId)}
-                    style={{ fontSize: 11, padding: "4px 10px" }}
-                  >
-                    Diff
-                  </button>
-                  {diffResult && (
-                    <button
-                      className="btn"
-                      onClick={() => setDiffResult(null)}
-                      style={{ fontSize: 11 }}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              )}
+              ) : (() => {
+                // Show lineage siblings first; fall back to all other traces
+                const lineageOptions = lineage
+                  ? lineage.nodes.filter((n) => n.traceId !== traceId)
+                  : [];
+                const allOtherOptions = traces.filter((t) => t.traceId !== traceId);
+                const useOptions = lineageOptions.length > 0 ? lineageOptions.map((n) => ({ traceId: n.traceId })) : allOtherOptions;
+                return (
+                  <>
+                    {lineageOptions.length === 0 && allOtherOptions.length > 0 && (
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 6, fontStyle: "italic" }}>
+                        No forks yet — comparing against any trace
+                      </div>
+                    )}
+                    {useOptions.length === 0 ? (
+                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        No other traces. Run demo first.
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <select
+                          id="diff-compare-select"
+                          className="trace-select"
+                          value={compareTargetId}
+                          onChange={(e) => setCompareTargetId(e.target.value)}
+                          style={{ fontSize: 11 }}
+                        >
+                          <option value="">— pick a branch —</option>
+                          {useOptions.map((n) => (
+                            <option key={n.traceId} value={n.traceId}>
+                              {n.traceId.slice(0, 18)}…
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn btn-accent"
+                          disabled={!compareTargetId}
+                          onClick={() => loadDiff(compareTargetId)}
+                          style={{ fontSize: 11, padding: "4px 10px" }}
+                        >
+                          Diff
+                        </button>
+                        {diffResult && (
+                          <button
+                            className="btn"
+                            onClick={() => setDiffResult(null)}
+                            style={{ fontSize: 11 }}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {diffResult && (
                 <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-secondary)" }}>
                   {diffResult.changed.length === 0
