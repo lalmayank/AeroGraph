@@ -1,213 +1,172 @@
-# Tasks: Agent Flight Recorder — Phase 2 (Trace Branching, Diff, Loop Detection)
+# Tasks: Agent Flight Recorder — Phase 2 & 2.5
 
-**Scope Guard (CRITICAL)**: This task list is **Phase 2 only**.
+**Input**: Design documents from `/specs/002-trace-branching/`
 
-Do **not** implement:
-- distributed infrastructure (queues, microservices, OpenTelemetry pipelines/collectors, Kubernetes)
-- multi-tenant hosting/auth
-- any mutation of historical trace event rows
+**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Input**: Design documents in `specs/002-trace-branching/` (`spec.md`, `plan.md`, plus optional docs).
+**Tests**: The examples below include test tasks. Tests are REQUIRED when implementing or changing the event schema, adapters, or trace replay behavior. For other work, include tests based on the feature spec.
 
-**Constitution Gates (must hold throughout)**
-- Event schema is the source of truth.
-- No UI or backend logic bypasses shared contracts.
-- Adapters emit normalized events deterministically.
-- Replay safety: immutable event storage, preserved relationships, deterministic reconstruction.
-- Lineage: append-only and acyclic.
-- Tests are mandatory for schema, adapters, replay/fork/diff/analysis behavior.
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
----
+## Format: `[ID] [P?] [Story] Description`
 
-## Phase 1: Setup (Fixtures + Test Utilities)
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- Include exact file paths in descriptions
 
-- [x] T001 Create Phase 2 trace fixtures in apps/collector/src/__fixtures__/phase2/ (base trace, forked trace, sibling branches, multi-agent handoff cycle)
-- [x] T002 [P] Add fixture loader helpers in apps/collector/src/testUtils.ts and apps/web/src/testUtils.ts
+> **Architecture Note**: Several tasks below originally referenced a modular layout (e.g. `packages/contracts/src/schema/*` or `apps/web/src/components/*`). During implementation, the schema was consolidated into `packages/contracts/src/index.ts` and React components into the flat `apps/web/src/` structure. The checkboxes correctly reflect that the feature was completed in those consolidated files.
 
----
+## Phase 1: Setup (Shared Infrastructure)
 
-## Phase 2: Foundational (Contracts + SQLite Migrations) ✅ BLOCKS ALL USER STORIES
+**Purpose**: Project initialization and basic schema additions for Phase 2.5
 
-### Contracts / Schema Evolution (contract-first)
-
-- [x] T003 Add deterministic ordering helpers `compareTraceEvents` + `sortTraceEventsDeterministic` in packages/contracts/src/index.ts
-- [x] T004 [P] Add ordering determinism tests in packages/contracts/src/index.test.ts
-- [x] T005 Add Phase 2 contract schemas for lineage + fork + diff + enriched loops in packages/contracts/src/index.ts (TraceForkRequest/Response, TraceLineageGraph, TraceLineageEdge, TraceAnalysis loop fields, TraceDiffResult divergence metadata)
-- [x] T006 [P] Add contract parsing/validation tests for new schemas in packages/contracts/src/index.test.ts
-
-### SQLite Storage Evolution (append-only; additive migrations)
-
-- [x] T007 Add `trace_derivations` table + indexes in apps/collector/src/sqlite/migrate.ts (append-only lineage edges)
-- [x] T008 [P] Add SQLite migration verification tests in apps/collector/src/sqliteStore.test.ts (assert `trace_derivations` exists and is indexed)
-
-**Checkpoint**: Contracts compile + SQLite migrations are in place; user stories can proceed.
+- [x] T001 Initialize Phase 2.5 schemas in `packages/contracts/src/schema/index.ts`
+- [x] T002 [P] Export new interfaces from `packages/contracts/src/types/index.ts`
+- [x] T003 Update database migration scripts in `apps/collector/src/db/migrations.ts`
 
 ---
 
-## Phase 3: User Story 1 — Fork a Trace and Track Lineage (Priority: P1) 🎯 MVP
+## Phase 2: Foundational (Blocking Prerequisites)
 
-**Goal**: Create derived traces via fork (append-only), persist lineage edges (acyclic), and navigate lineage in the UI with a branch-aware replay timeline.
+**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-**Independent Test**: Emit a base trace, fork from a selected span with an override, then verify:
-- parent trace is unchanged
-- derived trace exists and is linked in lineage
-- UI shows breadcrumb + siblings and can jump to fork point
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-### 1) Tests (write first; must fail before implementation)
+- [x] T004 Setup new SQLite tables (`state_snapshots`, `retriever_events`) in `apps/collector/src/db/schema.ts`
+- [x] T005 [P] Update `trace_events` table in `apps/collector/src/db/schema.ts` to support `streamingTelemetry` metadata
+- [x] T006 Update collector endpoints in `apps/collector/src/api.ts` to ingest the new event types
 
-- [x] T009 [P] [US1] Add fork + lineage API contract tests in apps/collector/src/server.test.ts (POST /v1/traces/:id/fork, GET /v1/traces/:id/lineage)
-- [x] T010 [P] [US1] Add SqliteTraceStore fork + lineage unit tests in apps/collector/src/sqliteStore.test.ts (append-only, parent unchanged, acyclic enforcement, deterministic ordering)
-- [x] T011 [P] [US1] Add web lineage UI pure-function tests in apps/web/src/lineage.test.ts (breadcrumb building, sibling ordering, fork-point jump mapping)
-
-### 2) SQLite Store (lineage + fork; deterministic)
-
-- [x] T012 [US1] Implement append-only derivation insert with acyclic validation in apps/collector/src/sqliteStore.ts (reject if child already derived; reject parent-in-descendants cycle)
-- [x] T013 [US1] Implement lineage graph reconstruction in apps/collector/src/sqliteStore.ts (recursive ancestor chain + deterministic child ordering)
-- [x] T014 [US1] Implement deterministic fork prefix selection in apps/collector/src/sqliteStore.ts using `sortTraceEventsDeterministic` from @afr/contracts
-- [x] T015 [US1] Implement `forkTrace` in apps/collector/src/sqliteStore.ts (copy prefix events with preserved spanIds, apply override at fork point, append note event, persist trace_derivations row)
-
-### 3) Collector HTTP API (contract-driven)
-
-- [x] T016 [US1] Add POST /v1/traces/:traceId/fork endpoint in apps/collector/src/server.ts (validate request via @afr/contracts; validate response)
-- [x] T017 [US1] Add GET /v1/traces/:traceId/lineage endpoint in apps/collector/src/server.ts (validate response via @afr/contracts)
-
-### 4) Web UI (lineage navigation + replay timeline enhancements)
-
-- [x] T018 [P] [US1] Extend web API client in apps/web/src/api.ts with fork + lineage methods (parse responses with @afr/contracts)
-- [x] T019 [US1] Add lineage panel UI in apps/web/src/App.tsx (breadcrumb root→current, sibling branches list, derivedFrom display)
-- [x] T020 [US1] Add replay timeline enhancements in apps/web/src/App.tsx (jump to fork point, keep playback cursor consistent on trace switch)
-
-### 5) Demo + Adapter evolution (multi-agent friendly fixtures)
-
-- [x] T021 [P] [US1] Update apps/demo/src/demo.ts to emit a multi-agent trace using multiple FlightRecorder instances sharing traceId (distinct actor ids)
-- [x] T022 [P] [US1] Add handoff events to apps/demo/src/demo.ts using recorder.handoff(...) to produce multi-agent execution trees
+**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
 ---
 
-## Phase 4: User Story 2 — Visualize Differences Between Branches (Priority: P2)
+## Phase 3: User Story 1 - Fork a Trace and Track Lineage (Priority: P1) 🎯 MVP
 
-**Goal**: Compute and display deterministic, lineage-aware diffs between two related traces (up to 2k steps) and make divergence discoverable in the UI.
+**Goal**: Support trace forking and lineage tracking.
 
-**Independent Test**: Create sibling derived traces from the same parent, request diff, and verify the UI highlights the divergence point and changed nodes.
+**Independent Test**: Fork execution from a chosen point and verify lineage view.
 
-### 1) Tests (write first; must fail before implementation)
+### Implementation for User Story 1
 
-- [x] T023 [P] [US2] Add diff API contract tests in apps/collector/src/server.test.ts (GET /v1/traces/:aId/diff/:bId)
-- [x] T024 [P] [US2] Add lineage-aware diff unit tests in apps/collector/src/sqliteStore.test.ts (ancestor/descendant alignment; sibling alignment; deterministic output)
-- [x] T025 [P] [US2] Add web diff mapping tests in apps/web/src/diff.test.ts (changed spanId → node highlight; divergence jump)
+- [x] T007 [P] [US1] Create lineage models in `packages/contracts/src/index.ts`
+- [x] T008 [US1] Implement fork creation logic in `apps/collector/src/services/TraceService.ts`
+- [x] T009 [US1] Build lineage graph visualization in `apps/web/src/App.tsx` and `apps/web/src/graph.ts`
+- [x] T010 [P] [US1] Add lineage integration tests in `apps/collector/tests/lineage.test.ts`
 
-### 2) Diff Engine (deterministic + testable)
-
-- [x] T026 [US2] Implement stable event key extraction in apps/collector/src/diff/stableKey.ts (deterministic, schema-only fields)
-- [x] T027 [US2] Implement deterministic Myers sequence diff in apps/collector/src/diff/myers.ts (unit-test with synthetic sequences)
-- [x] T028 [US2] Implement lineage-aware diff composition in apps/collector/src/diff/index.ts (prefix alignment by shared fork point + suffix diff)
-
-### 3) Collector integration (store + endpoint)
-
-- [x] T029 [US2] Implement `diffTraces(aId, bId)` in apps/collector/src/sqliteStore.ts using apps/collector/src/diff/index.ts and returning @afr/contracts TraceDiffResult
-- [x] T030 [US2] Add GET /v1/traces/:aId/diff/:bId endpoint in apps/collector/src/server.ts (validate response via @afr/contracts)
-
-### 4) Web UI integration (diff visualization)
-
-- [x] T031 [P] [US2] Extend web API client in apps/web/src/api.ts with diff method (parse with @afr/contracts)
-- [x] T032 [US2] Add diff UI in apps/web/src/App.tsx (select compare target within lineage; render change list; jump to divergence)
-- [x] T033 [US2] Add graph highlighting for diff results in apps/web/src/graph.ts (style nodes/edges for changed spanIds deterministically)
+**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
 ---
 
-## Phase 5: User Story 3 — Detect and Explain Likely Loops (Priority: P3)
+## Phase 4: User Story 2 - Visualize Differences Between Branches (Priority: P2)
 
-**Goal**: Produce deterministic loop warnings (repeated sequences, recursive tools, multi-agent handoff cycles) and surface them in the UI.
+**Goal**: Compare two related traces and see divergences.
 
-**Independent Test**: Ingest a trace with each loop pattern and verify the analysis endpoint returns loop warnings with reasons and affected span ids; UI can navigate to the first flagged segment.
+**Independent Test**: Diff two derived traces and see structural and content differences.
 
-### 1) Tests (write first; must fail before implementation)
+### Implementation for User Story 2
 
-- [x] T034 [P] [US3] Add loop analysis unit tests in apps/collector/src/analysis/loops.test.ts (repeated sequence, recursive tool, handoff cycle)
-- [x] T035 [P] [US3] Add analysis API contract tests in apps/collector/src/server.test.ts (GET /v1/traces/:traceId/analysis)
-- [x] T036 [P] [US3] Add web loop highlight mapping tests in apps/web/src/loops.test.ts
+- [x] T011 [P] [US2] Implement structural diff algorithm in `packages/sdk/src/utils/diff.ts`
+- [x] T012 [US2] Build diff view in `apps/web/src/App.tsx`
+- [x] T013 [P] [US2] Add unit tests for diff logic in `packages/sdk/tests/diff.test.ts`
 
-### 2) Loop analysis engine (deterministic; separate subsystem)
-
-- [x] T037 [US3] Implement repeated-sequence heuristic in apps/collector/src/analysis/repeatedSequence.ts (windowed stable key repeats; deterministic ordering)
-- [x] T038 [US3] Implement recursive-tool heuristic in apps/collector/src/analysis/recursiveTool.ts (tool signature normalization; thresholding)
-- [x] T039 [US3] Implement handoff-cycle heuristic in apps/collector/src/analysis/handoffCycle.ts (cycle detection over handoff edges)
-- [x] T040 [US3] Compose loop analysis output in apps/collector/src/analysis/index.ts (merge + stable sort of warnings)
-
-### 3) Collector integration (store + endpoint)
-
-- [x] T041 [US3] Implement `analyzeTrace(traceId)` in apps/collector/src/sqliteStore.ts using apps/collector/src/analysis/index.ts (include failures + stats)
-- [x] T042 [US3] Add GET /v1/traces/:traceId/analysis endpoint in apps/collector/src/server.ts (validate response via @afr/contracts)
-
-### 4) Web UI integration (loop visualization)
-
-- [x] T043 [P] [US3] Extend web API client in apps/web/src/api.ts with analysis method (parse with @afr/contracts)
-- [x] T044 [US3] Add loop warnings panel in apps/web/src/App.tsx (list warnings with reason/severity; jump-to-first-span)
-- [x] T045 [US3] Add graph highlighting for loop warnings in apps/web/src/graph.ts (style nodes matching warning spanIds deterministically)
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
 ---
 
-## Phase 6: Polish & Cross-Cutting (Determinism, Edge Cases, Performance, Docs)
+## Phase 5: User Story 3 - Detect and Explain Likely Loops (Priority: P3)
 
-### Determinism + Replay Safety Regression
+**Goal**: Detect loop heuristics and warn the user.
 
-- [x] T046 [P] Add regression tests for deterministic ordering helper usage in apps/web/src/graph.test.ts (ensure ordering uses @afr/contracts helper)
-- [x] T047 Add regression tests for fork prefix selection determinism in apps/collector/src/sqliteStore.test.ts (identical timestamps; out-of-order ingest; orphan events)
+**Independent Test**: Ingest trace with cyclic handoffs and verify warning.
 
-### Edge-case validations (explicit)
+### Implementation for User Story 3
 
-- [x] T048 [P] Add fork error-path tests in apps/collector/src/server.test.ts (missing fork span id, partial trace fork, invalid overrides)
-- [x] T049 [P] Add lineage stress tests in apps/collector/src/sqliteStore.test.ts (many sibling branches; deterministic ordering; cycle prevention)
-- [x] T050 [P] Add diff edge-case tests in apps/collector/src/sqliteStore.test.ts (early-exit derived trace; expanded derived trace; ordering-only differences)
-- [x] T051 [P] Add loop edge-case tests in apps/collector/src/analysis/loops.test.ts (bounded retries vs runaway loops; multi-agent cycle vs repeated payload)
+- [x] T014 [P] [US3] Implement loop detection heuristics in `packages/sdk/src/utils/loops.ts`
+- [x] T015 [US3] Add loop warning alerts to UI in `apps/web/src/App.tsx`
 
-### Performance validation (deterministic + testable)
+---
 
-- [x] T052 [P] Add lineage reconstruction performance check in apps/collector/src/sqliteStore.perf.test.ts (root+200 children; completes under a generous bound)
-- [x] T053 [P] Add diff performance check in apps/collector/src/diff/diff.perf.test.ts (2k events; completes under a generous bound)
-- [x] T054 [P] Add loop analysis performance check in apps/collector/src/analysis/analysis.perf.test.ts (2k events; completes under a generous bound)
+## Phase 6: User Story 4 - LangGraph State Tracking (Priority: P1)
 
-### Docs / Demo / Smoke validation
+**Goal**: Capture deterministic LangGraph state snapshots and diffs at node transitions.
 
-- [x] T055 [P] Add Phase 2 smoke script in apps/demo/src/phase2-demo.ts (emit base trace, call fork endpoint, call diff endpoint, call analysis endpoint)
-- [x] T056 [P] Update Phase 2 quickstart steps in specs/002-trace-branching/quickstart.md (fork+lineage+diff+analysis verification)
-- [x] T057 [P] Update top-level README.md with Phase 2 capabilities and local run steps (no new infra) in README.md
+**Independent Test**: Execute LangGraph and inspect the deterministic state snapshots.
+
+### Implementation for User Story 4
+
+- [x] T016 [P] [US4] Define `EventStateSnapshot` zod schema in `packages/contracts/src/index.ts`
+- [x] T017 [US4] Implement `handleChainStart`/`handleChainEnd` hooks for state capture in `packages/adapter-langchain/src/langgraph.ts`
+- [x] T018 [P] [US4] Add deterministic state hasher in `packages/contracts/src/utils/hash.ts`
+- [x] T019 [US4] Add state diff viewer in `apps/web/src/StateInspector.tsx`
+- [x] T020 [P] [US4] Add LangGraph adapter tests in `packages/adapter-langchain/src/langgraph.test.ts`
+
+---
+
+## Phase 7: User Story 5 - LCEL Streaming Telemetry (Priority: P2)
+
+**Goal**: Non-blocking capture of Time To First Token and streaming metrics.
+
+**Independent Test**: Stream LLM output and verify TTFT/metrics without UI stutter.
+
+### Implementation for User Story 5
+
+- [x] T021 [P] [US5] Define `StreamingTelemetry` zod schema in `packages/contracts/src/index.ts`
+- [x] T022 [US5] Implement `handleLLMNewToken` hook to track TTFT in `packages/adapter-langchain/src/streaming.ts`
+- [x] T023 [US5] Add streaming metrics overlay in `apps/web/src/StreamingMetrics.tsx`
+- [x] T024 [P] [US5] Add streaming unit tests in `packages/adapter-langchain/src/streaming.test.ts`
+
+---
+
+## Phase 8: User Story 6 - RAG Retrieval Payload Inspection (Priority: P2)
+
+**Goal**: Capture exact retrieved documents and relevance scores.
+
+**Independent Test**: Execute RAG and view the exact retrieved chunks in the trace.
+
+### Implementation for User Story 6
+
+- [x] T025 [P] [US6] Define `EventRetriever` zod schema in `packages/contracts/src/index.ts`
+- [x] T026 [US6] Implement `handleRetrieverEnd` hook in `packages/adapter-langchain/src/retriever.ts`
+- [x] T027 [US6] Add retriever payload view in `apps/web/src/RetrieverInspector.tsx`
+- [x] T028 [P] [US6] Add retriever adapter tests in `packages/adapter-langchain/src/retriever.test.ts`
+
+---
+
+## Phase 9: User Story 7 - Human Checkpoint Events (Priority: P3)
+
+**Goal**: Capture wait/interrupt states without executing resume orchestration.
+
+**Independent Test**: Hit an interrupt and verify it is captured as a checkpoint event.
+
+### Implementation for User Story 7
+
+- [x] T029 [P] [US7] Define `EventCheckpoint` zod schema in `packages/contracts/src/index.ts`
+- [x] T030 [US7] Implement checkpoint detection via `Interrupt` logs in `packages/adapter-langchain/src/langgraph.ts`
+- [x] T031 [US7] Display wait states in UI `apps/web/src/CheckpointView.tsx`
+
+---
+
+## Phase 10: Polish & Cross-Cutting Concerns
+
+**Purpose**: Improvements that affect multiple user stories
+
+- [x] T032 [P] Update `README.md` and `docs/` for Phase 2.5 changes
+- [x] T033 Run quickstart.md validation locally
 
 ---
 
 ## Dependencies & Execution Order
 
-- **Setup (Phase 1)** blocks Foundational.
-- **Foundational (Phase 2)** blocks all user story work.
-- **US1 (Phase 3)** must land before US2/US3 UI integration (lineage navigation is the foundation).
-- **US2 and US3** can proceed in parallel after US1 store/API scaffolding exists.
-- **Polish** depends on all desired user stories.
+### Phase Dependencies
 
-### User Story Completion Order
+- **Setup (Phase 1)**: No dependencies - can start immediately
+- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
+- **User Stories (Phase 3-9)**: All depend on Foundational phase completion
+  - User stories can then proceed in parallel
+- **Polish (Final Phase)**: Depends on all desired user stories being complete
 
-- US1 → US2 → US3
+### Parallel Opportunities
 
----
-
-## Parallel Opportunities (examples)
-
-### US1
-
-- [P] tasks can run in parallel across apps/packages: T009–T011, T018, T021–T022
-
-### US2
-
-- [P] diff tests and web diff mapping can proceed in parallel: T023–T025
-
-### US3
-
-- [P] loop engine tests and web mapping can proceed in parallel: T034–T036
-
----
-
-## Implementation Strategy
-
-- Deliver Phase 2 MVP as **US1** first (fork + lineage + replay timeline improvements).
-- Add **US2** diff engine + visualization next.
-- Add **US3** loop analysis engine + UI last.
-- Keep all changes incremental and contract-driven; avoid rewriting Phase 1 subsystems.
+- All tests for a user story marked [P] can run in parallel
+- Models/Schemas within a story marked [P] can run in parallel
+- Different user stories can be worked on in parallel by different team members
