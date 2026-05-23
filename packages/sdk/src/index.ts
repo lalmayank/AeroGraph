@@ -75,6 +75,14 @@ export class FlightRecorder {
     parentSpanId: string | null;
     title?: string;
     text: string;
+    payload?: {
+      streamingTelemetry?: {
+        timeToFirstTokenMs: number;
+        totalDurationMs: number;
+        tokensPerSecond: number;
+        tokenCount: number;
+      };
+    };
   }): Promise<TraceEvent> {
     const spanId = params.spanId ?? this.createSpanId();
     return this.emit({
@@ -86,7 +94,7 @@ export class FlightRecorder {
       kind: "response",
       status: "ok",
       title: params.title,
-      payload: { text: params.text },
+      payload: { text: params.text, ...(params.payload || {}) },
       links: []
     });
   }
@@ -204,6 +212,90 @@ export class FlightRecorder {
       status: "ok",
       title,
       payload,
+      links: []
+    });
+  }
+
+  async stateSnapshot(params: {
+    spanId?: string;
+    parentSpanId: string | null;
+    nodeName: string;
+    stateHash: string;
+    stateDiff: Record<string, unknown>;
+    fullState: Record<string, unknown>;
+  }): Promise<TraceEvent> {
+    const spanId = params.spanId ?? this.createSpanId();
+    return this.emit({
+      traceId: this.traceId,
+      spanId,
+      parentSpanId: params.parentSpanId,
+      occurredAt: new Date().toISOString(),
+      actor: { kind: "system", id: this.actor.id, name: this.actor.name },
+      kind: "state_snapshot",
+      status: "ok",
+      title: `State: ${params.nodeName}`,
+      payload: {
+        nodeName: params.nodeName,
+        stateHash: params.stateHash,
+        stateDiff: params.stateDiff,
+        fullState: params.fullState
+      },
+      links: []
+    });
+  }
+
+  async retriever(params: {
+    spanId?: string;
+    parentSpanId: string | null;
+    toolId: string;
+    toolName?: string;
+    query: string;
+    documents: Array<{
+      pageContent: string;
+      metadata: Record<string, unknown>;
+      score?: number;
+    }>;
+  }): Promise<TraceEvent> {
+    const spanId = params.spanId ?? this.createSpanId();
+    return this.emit({
+      traceId: this.traceId,
+      spanId,
+      parentSpanId: params.parentSpanId,
+      occurredAt: new Date().toISOString(),
+      actor: { kind: "tool", id: params.toolId, name: params.toolName },
+      kind: "retriever",
+      status: "ok",
+      title: params.toolName || "retriever",
+      payload: {
+        query: params.query,
+        documents: params.documents
+      },
+      links: []
+    });
+  }
+
+  async checkpoint(params: {
+    spanId?: string;
+    parentSpanId: string | null;
+    checkpointId: string;
+    reason: string;
+    state: Record<string, unknown>;
+  }): Promise<TraceEvent> {
+    const spanId = params.spanId ?? this.createSpanId();
+    return this.emit({
+      traceId: this.traceId,
+      spanId,
+      parentSpanId: params.parentSpanId,
+      occurredAt: new Date().toISOString(),
+      actor: { kind: "system", id: this.actor.id, name: this.actor.name },
+      kind: "checkpoint",
+      status: "ok",
+      title: `Checkpoint: ${params.checkpointId}`,
+      payload: {
+        checkpointId: params.checkpointId,
+        reason: params.reason,
+        state: params.state
+      },
       links: []
     });
   }

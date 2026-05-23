@@ -7,7 +7,10 @@ export const traceEventKindSchema = z.enum([
   "tool_result",
   "handoff",
   "error",
-  "note"
+  "note",
+  "state_snapshot",
+  "retriever",
+  "checkpoint"
 ]);
 export type TraceEventKind = z.infer<typeof traceEventKindSchema>;
 
@@ -54,7 +57,15 @@ const promptEventSchema = baseEventSchema.extend({
 const responseEventSchema = baseEventSchema.extend({
   kind: z.literal("response"),
   actor: agentActorSchema,
-  payload: z.object({ text: z.string() })
+  payload: z.object({ 
+    text: z.string(),
+    streamingTelemetry: z.object({
+      timeToFirstTokenMs: z.number(),
+      totalDurationMs: z.number(),
+      tokensPerSecond: z.number(),
+      tokenCount: z.number()
+    }).optional()
+  })
 });
 
 const toolCallEventSchema = baseEventSchema.extend({
@@ -92,6 +103,41 @@ const noteEventSchema = baseEventSchema.extend({
   payload: z.record(z.string(), z.unknown())
 });
 
+const stateSnapshotEventSchema = baseEventSchema.extend({
+  kind: z.literal("state_snapshot"),
+  actor: systemActorSchema,
+  payload: z.object({
+    nodeName: z.string(),
+    stateHash: z.string(),
+    stateDiff: z.record(z.string(), z.unknown()),
+    removedKeys: z.array(z.string()).optional(),
+    fullState: z.record(z.string(), z.unknown())
+  })
+});
+
+const retrieverEventSchema = baseEventSchema.extend({
+  kind: z.literal("retriever"),
+  actor: toolActorSchema,
+  payload: z.object({
+    query: z.string(),
+    documents: z.array(z.object({
+      pageContent: z.string(),
+      metadata: z.record(z.string(), z.unknown()),
+      score: z.number().optional()
+    }))
+  })
+});
+
+const checkpointEventSchema = baseEventSchema.extend({
+  kind: z.literal("checkpoint"),
+  actor: systemActorSchema,
+  payload: z.object({
+    checkpointId: z.string(),
+    reason: z.string(),
+    state: z.record(z.string(), z.unknown())
+  })
+});
+
 export const traceEventSchema = z.discriminatedUnion("kind", [
   promptEventSchema,
   responseEventSchema,
@@ -99,7 +145,10 @@ export const traceEventSchema = z.discriminatedUnion("kind", [
   toolResultEventSchema,
   handoffEventSchema,
   errorEventSchema,
-  noteEventSchema
+  noteEventSchema,
+  stateSnapshotEventSchema,
+  retrieverEventSchema,
+  checkpointEventSchema
 ]);
 
 export type TraceEvent = z.infer<typeof traceEventSchema>;
@@ -266,3 +315,5 @@ export function validateTraceDiffResult(input: unknown): TraceDiffResult {
 export function validateTraceAnalysis(input: unknown): TraceAnalysis {
   return traceAnalysisSchema.parse(input);
 }
+
+export * from "./utils/hash";

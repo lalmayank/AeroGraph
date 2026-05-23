@@ -4,6 +4,8 @@ import ReactFlow, {
   BackgroundVariant,
   Controls,
   MarkerType,
+  Handle,
+  Position,
   type NodeTypes,
   type Node,
   type Edge,
@@ -14,6 +16,11 @@ import { buildGraph, computePlaybackState, applyDiffHighlighting, applyLoopHighl
 import { buildLineageBreadcrumb, getForkPointSpanId, listSiblingTraceIds } from "./lineage";
 import { getDiffChangedSpanIds } from "./diff";
 import { getLoopWarningSpanIds, getFirstLoopSpanId } from "./loops";
+import { StateInspector } from "./StateInspector";
+import { StreamingMetrics } from "./StreamingMetrics";
+import { RetrieverInspector } from "./RetrieverInspector";
+import { CheckpointView } from "./CheckpointView";
+import { JsonView } from "./JsonView";
 
 // ─── Kind icons + colors ───────────────────────────────────────────────────────
 const KIND_META: Record<string, { icon: string; label: string }> = {
@@ -24,6 +31,9 @@ const KIND_META: Record<string, { icon: string; label: string }> = {
   error:       { icon: "⚠️", label: "Error" },
   handoff:     { icon: "🔀", label: "Handoff" },
   note:        { icon: "📝", label: "Note" },
+  state_snapshot: { icon: "💾", label: "State" },
+  retriever:   { icon: "🔎", label: "Retriever" },
+  checkpoint:  { icon: "⏸️", label: "Checkpoint" }
 };
 
 // ─── Custom Node Component ─────────────────────────────────────────────────────
@@ -55,6 +65,9 @@ function TraceNode({ data }: { data: { event: TraceEvent; selected?: boolean } }
           : "0 4px 16px rgba(0,0,0,0.35)",
       }}
     >
+      <Handle type="target" position={Position.Top} style={{ background: "rgba(129,140,248,0.85)", border: "none", width: 6, height: 6 }} />
+      <Handle type="source" position={Position.Bottom} style={{ background: "rgba(129,140,248,0.85)", border: "none", width: 6, height: 6 }} />
+
       {/* Kind badge row */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
         <span style={{ fontSize: 13 }}>{meta.icon}</span>
@@ -421,13 +434,23 @@ export default function App() {
 
           <div className="divider" />
 
-          {/* Raw payload */}
-          <div className="detail-section">
-            <div className="detail-section-label">Raw Payload</div>
-            <pre className="code-block">
-              {JSON.stringify(p, null, 2)}
-            </pre>
-          </div>
+          {e.kind === "state_snapshot" ? (
+            <StateInspector event={e} />
+          ) : e.kind === "retriever" ? (
+            <RetrieverInspector event={e} />
+          ) : e.kind === "checkpoint" ? (
+            <CheckpointView event={e} />
+          ) : (
+            <>
+              {e.kind === "response" && p?.streamingTelemetry && (
+                <StreamingMetrics event={e} />
+              )}
+              <div className="detail-section">
+                <div className="detail-section-label">Raw Payload</div>
+                <JsonView data={p} />
+              </div>
+            </>
+          )}
         </div>
       </>
     );

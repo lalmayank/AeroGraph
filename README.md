@@ -14,6 +14,12 @@ An open-source flight recorder for AI agent workflows — local-first, append-on
 - **Lineage navigation**: breadcrumb, sibling list, derivedFrom — navigate the branch tree in the UI
 - **Deterministic diff**: compare two lineage-related traces with Myers diff; divergence highlighted on the graph
 - **Loop detection**: automatically detects repeated sequences, recursive tool usage, and multi-agent handoff cycles
+
+**Phase 2.5 — Advanced Observability**
+- **LangGraph State Tracking**: Capture full LangGraph state snapshots at node transitions, track state evolution.
+- **LCEL Streaming Telemetry**: Telemetry overlays for stream completion times, Time-to-First-Token (TTFT), and tokens-per-second metrics.
+- **RAG Payload Inspection**: Explicit first-class support for viewing retrieval queries, source documents, and metadata scoring.
+- **Human Checkpoints**: First-class handling of `interrupt` states and human-in-the-loop approvals.
 - All outputs validated through shared contracts (`@afr/contracts`); no schema bypasses
 
 ## Repository structure
