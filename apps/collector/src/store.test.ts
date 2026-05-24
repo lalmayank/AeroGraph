@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TraceStore } from "./store";
-import { traceEventSchemaVersion, type TraceEvent } from "@afr/contracts";
+import { traceEventSchemaVersion, type TraceEvent } from "@aerograph/contracts";
 
 function mkEvent(partial: Partial<TraceEvent> & Pick<TraceEvent, "traceId" | "spanId" | "occurredAt">): TraceEvent {
   return {

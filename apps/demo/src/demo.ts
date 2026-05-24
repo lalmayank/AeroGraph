@@ -1,4 +1,4 @@
-import { FlightRecorder } from "@afr/sdk";
+import { FlightRecorder } from "@aerograph/sdk";
 
 const endpoint = process.env.COLLECTOR_URL ?? "http://localhost:4317";
 

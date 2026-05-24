@@ -1,5 +1,5 @@
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
-import type { FlightRecorder } from "@afr/sdk";
+import type { FlightRecorder } from "@aerograph/sdk";
 
 export interface RetrieverHandlerOptions {
   recorder: FlightRecorder;

@@ -17,7 +17,7 @@ import {
   type TraceMeta,
   type TraceDiffResult,
   type TraceAnalysis,
-} from "@afr/contracts";
+} from "@aerograph/contracts";
 import { createApi } from "./api";
 import {
   buildGraph,

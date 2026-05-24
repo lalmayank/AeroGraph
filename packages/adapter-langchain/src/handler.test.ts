@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createLangChainHandler } from "./handler";
-import { FlightRecorder } from "@afr/sdk";
-import { validateTraceEvent, type TraceEvent } from "@afr/contracts";
+import { FlightRecorder } from "@aerograph/sdk";
+import { validateTraceEvent, type TraceEvent } from "@aerograph/contracts";
 
 function createRecorderCapture(): { recorder: FlightRecorder; events: TraceEvent[] } {
   const events: TraceEvent[] = [];

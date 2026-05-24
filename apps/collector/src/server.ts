@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { validateTraceEvent, validateTraceForkRequest, validateTraceForkResponse, validateTraceLineageGraph, validateTraceDiffResult, validateTraceAnalysis } from "@afr/contracts";
+import { validateTraceEvent, validateTraceForkRequest, validateTraceForkResponse, validateTraceLineageGraph, validateTraceDiffResult, validateTraceAnalysis } from "@aerograph/contracts";
 import { getDatabase } from "./sqlite/db";
 import { runMigrations } from "./sqlite/migrate";
 import { SqliteTraceStore } from "./sqliteStore";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 import { analyzeTrace } from "./index";
 
 /**

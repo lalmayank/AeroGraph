@@ -4,10 +4,10 @@ This package provides a `FlightRecorder` client for emitting normalized trace ev
 
 ## Usage for Adapters
 
-When building an adapter (e.g., for LangChain, AutoGen, or CrewAI), use the SDK to deterministically map framework execution signals to the shared `@afr/contracts` schema.
+When building an adapter (e.g., for LangChain, AutoGen, or CrewAI), use the SDK to deterministically map framework execution signals to the shared `@aerograph/contracts` schema.
 
 ```typescript
-import { FlightRecorder } from "@afr/sdk";
+import { FlightRecorder } from "@aerograph/sdk";
 
 const recorder = new FlightRecorder({
   endpoint: "http://localhost:4317",

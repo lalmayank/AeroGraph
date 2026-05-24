@@ -1,5 +1,5 @@
-import { FlightRecorder } from "@afr/sdk";
-import { createLangChainHandler } from "@afr/adapter-langchain";
+import { FlightRecorder } from "@aerograph/sdk";
+import { createLangChainHandler } from "@aerograph/adapter-langchain";
 // Using a mock LLM structure for demonstration without real API keys
 import { FakeListChatModel } from "@langchain/core/utils/testing";
 

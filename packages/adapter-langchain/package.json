@@ -1,10 +1,40 @@
 {
-  "name": "@afr/adapter-langchain",
+  "name": "@aerograph/adapter-langchain",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "LangChain adapter for emitting AeroGraph traces from agent workflows.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SGcpu/AeroGraph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SGcpu/AeroGraph/issues"
+  },
+  "homepage": "https://github.com/SGcpu/AeroGraph#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai",
+    "adapter",
+    "langchain",
+    "trace",
+    "observability"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
@@ -12,8 +42,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@afr/contracts": "*",
-    "@afr/sdk": "*",
+    "@aerograph/contracts": "*",
+    "@aerograph/sdk": "*",
     "langchain": "^0.3.0",
     "@langchain/core": "^0.3.0"
   },

@@ -1,4 +1,4 @@
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 
 /**
  * Produces a deterministic, schema-only stable key for a trace event.

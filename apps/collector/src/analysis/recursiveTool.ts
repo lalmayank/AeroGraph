@@ -1,4 +1,4 @@
-import { sortTraceEventsDeterministic, type TraceEvent } from "@afr/contracts";
+import { sortTraceEventsDeterministic, type TraceEvent } from "@aerograph/contracts";
 
 export type RecursiveToolWarning = {
   kind: "recursive_tool";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TraceDiffResult, TraceMeta } from "@afr/contracts";
+import type { TraceDiffResult, TraceMeta } from "@aerograph/contracts";
 import { mapDiffToHighlights, getDiffChangedSpanIds } from "./diff";
 
 const META_A: TraceMeta = {

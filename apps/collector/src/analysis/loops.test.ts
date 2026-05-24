@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { detectRepeatedSequences } from "../analysis/repeatedSequence";
 import { detectRecursiveTools } from "../analysis/recursiveTool";
 import { detectHandoffCycles } from "../analysis/handoffCycle";
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 
 const BASE = {
   schemaVersion: "1.0.0" as const,

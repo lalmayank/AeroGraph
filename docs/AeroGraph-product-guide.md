@@ -45,12 +45,12 @@ LangChain users can connect the adapter and automatically translate LangChain ca
 
 ## SDK Surface
 
-The SDK lives in `@afr/sdk` and exposes the `FlightRecorder` client. This is the main API that end users call from their own application code.
+The SDK lives in `@aerograph/sdk` and exposes the `FlightRecorder` client. This is the main API that end users call from their own application code.
 
 ### Basic recorder setup
 
 ```ts
-import { FlightRecorder } from "@afr/sdk";
+import { FlightRecorder } from "@aerograph/sdk";
 
 const recorder = new FlightRecorder({
   endpoint: "http://localhost:4317",
@@ -115,15 +115,15 @@ If your runtime already has stable run IDs, pass them in as `spanId` so traces l
 
 ## LangChain Integration
 
-The LangChain adapter lives in `@afr/adapter-langchain`. It converts LangChain callback events into AeroGraph events using a deterministic mapping.
+The LangChain adapter lives in `@aerograph/adapter-langchain`. It converts LangChain callback events into AeroGraph events using a deterministic mapping.
 
 ### How it works
 
 ```ts
 import { createAgent, tool } from "langchain";
 import * as z from "zod";
-import { FlightRecorder } from "@afr/sdk";
-import { createLangChainHandler } from "@afr/adapter-langchain";
+import { FlightRecorder } from "@aerograph/sdk";
+import { createLangChainHandler } from "@aerograph/adapter-langchain";
 
 const recorder = new FlightRecorder({
   endpoint: "http://localhost:4317",
@@ -278,7 +278,7 @@ It is useful when you need to:
 ## Practical Example: One Developer, One Trace
 
 ```ts
-import { FlightRecorder } from "@afr/sdk";
+import { FlightRecorder } from "@aerograph/sdk";
 
 const recorder = new FlightRecorder({
   endpoint: "http://localhost:4317",
@@ -318,8 +318,8 @@ In this flow, the user can later fetch the trace, inspect the tool payloads, and
 ```ts
 import { createAgent, tool } from "langchain";
 import * as z from "zod";
-import { FlightRecorder } from "@afr/sdk";
-import { createLangChainHandler } from "@afr/adapter-langchain";
+import { FlightRecorder } from "@aerograph/sdk";
+import { createLangChainHandler } from "@aerograph/adapter-langchain";
 
 const recorder = new FlightRecorder({
   endpoint: "http://localhost:4317",

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import Database from "better-sqlite3";
 import { runMigrations } from "./sqlite/migrate";
 import { SqliteTraceStore } from "./sqliteStore";
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 
 /**
  * T052: Lineage reconstruction performance check.

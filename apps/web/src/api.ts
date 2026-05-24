@@ -13,7 +13,7 @@ import {
   type TraceWithMeta,
   type TraceDiffResult,
   type TraceAnalysis
-} from "@afr/contracts";
+} from "@aerograph/contracts";
 
 const DEFAULT_COLLECTOR = "http://localhost:4317";
 

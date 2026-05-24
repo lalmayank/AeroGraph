@@ -1,10 +1,40 @@
 {
-  "name": "@afr/contracts",
+  "name": "@aerograph/contracts",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "Shared Zod contracts for AeroGraph trace events and APIs.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SGcpu/AeroGraph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SGcpu/AeroGraph/issues"
+  },
+  "homepage": "https://github.com/SGcpu/AeroGraph#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "contracts",
+    "trace",
+    "zod"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",

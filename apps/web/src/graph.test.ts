@@ -61,7 +61,7 @@ describe("web: graph utilities", () => {
     ]);
   });
 
-  // T046: regression — ordering uses @afr/contracts helper (sortTraceEventsDeterministic)
+  // T046: regression — ordering uses @aerograph/contracts helper (sortTraceEventsDeterministic)
   it("computePlaybackState produces same result regardless of input order", () => {
     const events = [
       { occurredAt: "2026-05-20T00:00:02.000Z", spanId: "s3", kind: "note" },

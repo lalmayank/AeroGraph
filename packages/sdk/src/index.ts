@@ -3,7 +3,7 @@ import {
   traceEventSchemaVersion,
   type TraceEvent,
   validateTraceEvent
-} from "@afr/contracts";
+} from "@aerograph/contracts";
 
 export type FlightRecorderOptions = {
   endpoint: string;
