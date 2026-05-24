@@ -95,7 +95,7 @@
 ### Implementation for User Story 4
 
 - [x] T016 [P] [US4] Define `EventStateSnapshot` zod schema in `packages/contracts/src/index.ts`
-- [x] T017 [US4] Implement `handleChainStart`/`handleChainEnd` hooks for state capture in `packages/adapter-langchain/src/langgraph.ts`
+- [x] T017 [US4] Update SDK recorder type and implement `handleChainStart`/`handleChainEnd` hooks for state capture in `packages/adapter-langchain/src/langgraph.ts` and `packages/sdk/src/index.ts`
 - [x] T018 [P] [US4] Add deterministic state hasher in `packages/contracts/src/utils/hash.ts`
 - [x] T019 [US4] Add state diff viewer in `apps/web/src/StateInspector.tsx`
 - [x] T020 [P] [US4] Add LangGraph adapter tests in `packages/adapter-langchain/src/langgraph.test.ts`

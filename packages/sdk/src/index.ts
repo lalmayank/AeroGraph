@@ -222,6 +222,7 @@ export class FlightRecorder {
     nodeName: string;
     stateHash: string;
     stateDiff: Record<string, unknown>;
+    removedKeys?: string[];
     fullState: Record<string, unknown>;
   }): Promise<TraceEvent> {
     const spanId = params.spanId ?? this.createSpanId();
@@ -238,6 +239,7 @@ export class FlightRecorder {
         nodeName: params.nodeName,
         stateHash: params.stateHash,
         stateDiff: params.stateDiff,
+        removedKeys: params.removedKeys,
         fullState: params.fullState
       },
       links: []
