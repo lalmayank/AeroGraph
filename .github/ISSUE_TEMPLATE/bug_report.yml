@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a defect, regression, or unexpected behavior in AeroGraph.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for reproducible bugs or regressions.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest reliable repro you can provide.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Environment
+      description: Package versions, OS, Node version, browser, and any relevant adapter details.
+      placeholder: "Node 20, macOS 14, apps/web"
+  - type: textarea
+    id: replay
+    attributes:
+      label: Replay, determinism, or schema impact
+      description: Note whether this bug affects trace order, replay output, lineage, or contracts.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or traces
+      description: Paste any useful evidence here.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched for existing issues before filing this one.
+          required: true
+        - label: I included enough detail for someone else to reproduce the problem.
+          required: true

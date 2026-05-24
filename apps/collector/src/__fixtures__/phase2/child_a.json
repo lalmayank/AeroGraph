@@ -1,0 +1,86 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s1",
+    "parentSpanId": null,
+    "occurredAt": "2026-05-20T00:00:00.000Z",
+    "actor": { "kind": "agent", "id": "agent-1", "name": "Agent 1" },
+    "kind": "prompt",
+    "status": "ok",
+    "payload": { "text": "Root prompt" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s2",
+    "parentSpanId": "s1",
+    "occurredAt": "2026-05-20T00:00:01.000Z",
+    "actor": { "kind": "agent", "id": "agent-1", "name": "Agent 1" },
+    "kind": "response",
+    "status": "ok",
+    "payload": { "text": "Root response" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s3",
+    "parentSpanId": "s1",
+    "occurredAt": "2026-05-20T00:00:02.000Z",
+    "actor": { "kind": "tool", "id": "calculator", "name": "Calculator" },
+    "kind": "tool_call",
+    "status": "ok",
+    "payload": { "input": { "expression": "1+1" } },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s4",
+    "parentSpanId": "s3",
+    "occurredAt": "2026-05-20T00:00:03.000Z",
+    "actor": { "kind": "tool", "id": "calculator", "name": "Calculator" },
+    "kind": "tool_result",
+    "status": "ok",
+    "payload": { "output": { "result": 2 } },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s5",
+    "parentSpanId": "s1",
+    "occurredAt": "2026-05-20T00:00:04.000Z",
+    "actor": { "kind": "system", "id": "system" },
+    "kind": "handoff",
+    "status": "ok",
+    "payload": { "fromAgentId": "agent-1", "toAgentId": "agent-2", "reason": "delegate" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s6",
+    "parentSpanId": "s5",
+    "occurredAt": "2026-05-20T00:00:05.000Z",
+    "actor": { "kind": "agent", "id": "agent-2", "name": "Agent 2" },
+    "kind": "prompt",
+    "status": "ok",
+    "payload": { "text": "Fork override A" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_child_a",
+    "spanId": "s8",
+    "parentSpanId": "s6",
+    "occurredAt": "2026-05-20T00:00:06.000Z",
+    "actor": { "kind": "agent", "id": "agent-2", "name": "Agent 2" },
+    "kind": "response",
+    "status": "ok",
+    "payload": { "text": "Branch A response" },
+    "links": []
+  }
+]

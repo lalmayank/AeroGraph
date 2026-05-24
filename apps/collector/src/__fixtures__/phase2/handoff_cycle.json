@@ -1,0 +1,74 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c1",
+    "parentSpanId": null,
+    "occurredAt": "2026-05-20T00:00:00.000Z",
+    "actor": { "kind": "agent", "id": "agent-1", "name": "Agent 1" },
+    "kind": "prompt",
+    "status": "ok",
+    "payload": { "text": "Start" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c2",
+    "parentSpanId": "c1",
+    "occurredAt": "2026-05-20T00:00:01.000Z",
+    "actor": { "kind": "system", "id": "system" },
+    "kind": "handoff",
+    "status": "ok",
+    "payload": { "fromAgentId": "agent-1", "toAgentId": "agent-2", "reason": "ask" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c3",
+    "parentSpanId": "c2",
+    "occurredAt": "2026-05-20T00:00:02.000Z",
+    "actor": { "kind": "agent", "id": "agent-2", "name": "Agent 2" },
+    "kind": "prompt",
+    "status": "ok",
+    "payload": { "text": "Help" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c4",
+    "parentSpanId": "c3",
+    "occurredAt": "2026-05-20T00:00:03.000Z",
+    "actor": { "kind": "system", "id": "system" },
+    "kind": "handoff",
+    "status": "ok",
+    "payload": { "fromAgentId": "agent-2", "toAgentId": "agent-1", "reason": "clarify" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c5",
+    "parentSpanId": "c4",
+    "occurredAt": "2026-05-20T00:00:04.000Z",
+    "actor": { "kind": "agent", "id": "agent-1", "name": "Agent 1" },
+    "kind": "prompt",
+    "status": "ok",
+    "payload": { "text": "Clarification" },
+    "links": []
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "traceId": "t_cycle",
+    "spanId": "c6",
+    "parentSpanId": "c5",
+    "occurredAt": "2026-05-20T00:00:05.000Z",
+    "actor": { "kind": "system", "id": "system" },
+    "kind": "handoff",
+    "status": "ok",
+    "payload": { "fromAgentId": "agent-1", "toAgentId": "agent-2", "reason": "repeat" },
+    "links": []
+  }
+]

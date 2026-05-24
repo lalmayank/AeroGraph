@@ -1,0 +1,6 @@
+# Replace the placeholder owner with real GitHub usernames or teams before enabling branch protection.
+# Shared contract and core architecture changes require explicit maintainer review.
+packages/contracts/ @SGcpu
+<!-- apps/collector/ @REPLACE-WITH-TEAM
+apps/web/ @REPLACE-WITH-TEAM
+packages/sdk/ @REPLACE-WITH-TEAM -->
