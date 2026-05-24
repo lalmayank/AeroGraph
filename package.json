@@ -1,5 +1,5 @@
 {
-  "name": "agent-flight-recorder",
+  "name": "aerograph",
   "private": true,
   "workspaces": [
     "apps/*",

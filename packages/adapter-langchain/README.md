@@ -1,6 +1,6 @@
 # @afr/adapter-langchain
 
-This adapter bridges LangChain.js workflows into the Agent Flight Recorder.
+This adapter bridges LangChain.js workflows into the AeroGraph.
 
 ## Deterministic Mapping
 

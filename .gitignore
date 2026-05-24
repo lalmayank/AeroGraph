@@ -13,6 +13,9 @@ apps/collector/data/
 .github/copilot-instructions.md
 Thumbs.db
 .agents/
+apps/collector/data/
+.DS_Store
+Thumbs.db
 *.tmp
 *.swp
 .vscode/
