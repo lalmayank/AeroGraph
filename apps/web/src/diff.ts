@@ -1,4 +1,4 @@
-import type { TraceDiffResult } from "@afr/contracts";
+import type { TraceDiffResult } from "@aerograph/contracts";
 
 export type DiffHighlight = {
   spanId: string;

@@ -1,6 +1,6 @@
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
-import type { FlightRecorder } from "@afr/sdk";
-import { getDeterministicStateHash, computeStateDiff } from "@afr/contracts";
+import type { FlightRecorder } from "@aerograph/sdk";
+import { getDeterministicStateHash, computeStateDiff } from "@aerograph/contracts";
 
 export interface LangGraphHandlerOptions {
   recorder: FlightRecorder;

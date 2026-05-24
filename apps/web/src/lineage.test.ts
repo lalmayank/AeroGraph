@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TraceLineageGraph } from "@afr/contracts";
+import type { TraceLineageGraph } from "@aerograph/contracts";
 import { buildLineageBreadcrumb, getForkPointSpanId, listSiblingTraceIds } from "./lineage";
 
 describe("web: lineage utilities", () => {

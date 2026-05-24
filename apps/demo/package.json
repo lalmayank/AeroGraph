@@ -10,8 +10,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@afr/sdk": "*",
-    "@afr/adapter-langchain": "*",
+    "@aerograph/sdk": "*",
+    "@aerograph/adapter-langchain": "*",
     "langchain": "^0.3.0",
     "@langchain/core": "^0.3.0"
   },

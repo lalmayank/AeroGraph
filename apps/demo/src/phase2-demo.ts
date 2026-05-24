@@ -11,7 +11,7 @@
  * Requires the collector to be running on http://localhost:4317
  */
 
-import { FlightRecorder } from "@afr/sdk";
+import { FlightRecorder } from "@aerograph/sdk";
 
 const COLLECTOR_URL = process.env.COLLECTOR_URL ?? "http://localhost:4317";
 

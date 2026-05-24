@@ -1,4 +1,4 @@
-import { sortTraceEventsDeterministic, type TraceEvent } from "@afr/contracts";
+import { sortTraceEventsDeterministic, type TraceEvent } from "@aerograph/contracts";
 import { MarkerType, type Node, type Edge } from "reactflow";
 
 export function buildGraph(events: TraceEvent[]): { nodes: Node[]; edges: Edge[] } {

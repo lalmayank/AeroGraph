@@ -1,4 +1,4 @@
-import type { TraceLineageGraph, TraceLineageEdge } from "@afr/contracts";
+import type { TraceLineageGraph, TraceLineageEdge } from "@aerograph/contracts";
 
 export function getLineageParentEdge(
   graph: TraceLineageGraph,

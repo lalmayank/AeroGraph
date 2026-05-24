@@ -20,7 +20,7 @@ An open-source flight recorder for AI agent workflows — local-first, append-on
 - **LCEL Streaming Telemetry**: Telemetry overlays for stream completion times, Time-to-First-Token (TTFT), and tokens-per-second metrics.
 - **RAG Payload Inspection**: Explicit first-class support for viewing retrieval queries, source documents, and metadata scoring.
 - **Human Checkpoints**: First-class handling of `interrupt` states and human-in-the-loop approvals.
-- All outputs validated through shared contracts (`@afr/contracts`); no schema bypasses
+- All outputs validated through shared contracts (`@aerograph/contracts`); no schema bypasses
 
 ## Repository structure
 
@@ -82,7 +82,7 @@ open http://localhost:5173
 ## Architecture
 
 - **No distributed infrastructure**: no queues, no collectors, no Kubernetes — all local SQLite
-- **Contract-first**: all API shapes defined in `@afr/contracts` (Zod); validated on every ingress/egress
+- **Contract-first**: all API shapes defined in `@aerograph/contracts` (Zod); validated on every ingress/egress
 - **Append-only**: events and lineage edges are never mutated; forking copies prefix events
 - **Deterministic**: ordering, diff, and loop analysis produce the same result for the same input
 
@@ -92,7 +92,7 @@ open http://localhost:5173
 This repository serves two different audiences:
 
 - Contributors work in the monorepo and run the collector, web UI, demos, and tests locally.
-- End users consume the reusable packages, usually `@afr/sdk` and `@afr/adapter-langchain`, from their own application.
+- End users consume the reusable packages, usually `@aerograph/sdk` and `@aerograph/adapter-langchain`, from their own application.
 
 That split is intentional. The repo contains the product, but the public integration surface is the SDK and adapters. The collector and web UI are the viewing and storage layer that can be run locally or hosted separately.
 

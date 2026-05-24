@@ -1,5 +1,5 @@
 import React from "react";
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 import { JsonView } from "./JsonView";
 
 export function RetrieverInspector({ event }: { event: TraceEvent }) {

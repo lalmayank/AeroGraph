@@ -1,4 +1,4 @@
-import type { TraceAnalysis } from "@afr/contracts";
+import type { TraceAnalysis } from "@aerograph/contracts";
 
 export type LoopHighlight = {
   spanId: string;

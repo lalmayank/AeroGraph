@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { LangGraphCallbackHandler } from "./langgraph";
-import { getDeterministicStateHash } from "@afr/contracts";
+import { getDeterministicStateHash } from "@aerograph/contracts";
 
 describe("LangGraphCallbackHandler", () => {
   it("should capture initial state on graph start", async () => {

@@ -1,4 +1,4 @@
-import { sortTraceEventsDeterministic, type TraceEvent, type TraceAnalysis } from "@afr/contracts";
+import { sortTraceEventsDeterministic, type TraceEvent, type TraceAnalysis } from "@aerograph/contracts";
 import { detectRepeatedSequences } from "./repeatedSequence";
 import { detectRecursiveTools } from "./recursiveTool";
 import { detectHandoffCycles } from "./handoffCycle";

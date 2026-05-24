@@ -11,7 +11,7 @@ import {
   type TraceWithMeta,
   type TraceDiffResult,
   type TraceAnalysis
-} from "@afr/contracts";
+} from "@aerograph/contracts";
 import { nanoid } from "nanoid";
 import { diffTraceEvents } from "./diff/index";
 import { analyzeTrace as analyzeTraceEvents } from "./analysis/index";

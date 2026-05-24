@@ -15,7 +15,7 @@ import type {
   TraceEvent,
   TraceMeta,
   TraceWithMeta
-} from "@afr/contracts";
+} from "@aerograph/contracts";
 import { nanoid } from "nanoid";
 
 export type TraceStoreOptions = {

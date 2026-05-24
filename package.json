@@ -1,14 +1,28 @@
 {
   "name": "aerograph",
   "private": true,
+  "description": "Open-source flight recorder for AI agent workflows.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SGcpu/AeroGraph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SGcpu/AeroGraph/issues"
+  },
+  "homepage": "https://github.com/SGcpu/AeroGraph#readme",
+  "packageManager": "npm@11.5.2",
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @afr/contracts -w @afr/sdk -w @afr/adapter-langchain -w apps-collector -w apps-demo -w apps-web",
+    "build": "npm run build -w @aerograph/contracts -w @aerograph/sdk -w @aerograph/adapter-langchain -w apps-collector -w apps-demo -w apps-web",
     "dev": "npm run --workspaces dev",
-    "test": "npm run build -w @afr/contracts -w @afr/sdk -w @afr/adapter-langchain && npm run --workspaces test",
+    "test": "npm run build -w @aerograph/contracts -w @aerograph/sdk -w @aerograph/adapter-langchain && npm run --workspaces test",
     "lint": "npm run --workspaces lint"
   }
 }

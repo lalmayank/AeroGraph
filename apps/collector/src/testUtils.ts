@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateTraceEvent, type TraceEvent } from "@afr/contracts";
+import { validateTraceEvent, type TraceEvent } from "@aerograph/contracts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

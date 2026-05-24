@@ -3,4 +3,4 @@ export type {
   TraceDiffResult,
   TraceMeta,
   TraceWithMeta
-} from "@afr/contracts";
+} from "@aerograph/contracts";

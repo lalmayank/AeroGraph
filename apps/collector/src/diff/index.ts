@@ -1,4 +1,4 @@
-import { sortTraceEventsDeterministic, type TraceEvent, type TraceDiffResult, type TraceMeta } from "@afr/contracts";
+import { sortTraceEventsDeterministic, type TraceEvent, type TraceDiffResult, type TraceMeta } from "@aerograph/contracts";
 import { stableKey } from "./stableKey";
 import { myersDiff } from "./myers";
 
@@ -15,7 +15,7 @@ import { myersDiff } from "./myers";
  * The shared prefix for forked traces is detected by intersecting spanIds
  * (because forkTrace copies events with preserved spanIds).
  *
- * Output: TraceDiffResult (validated by @afr/contracts before returning).
+ * Output: TraceDiffResult (validated by @aerograph/contracts before returning).
  */
 export function diffTraceEvents(
   aEvents: TraceEvent[],

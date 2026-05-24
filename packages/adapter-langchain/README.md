@@ -1,4 +1,4 @@
-# @afr/adapter-langchain
+# @aerograph/adapter-langchain
 
 This adapter bridges LangChain.js workflows into the AeroGraph.
 

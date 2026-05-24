@@ -3,7 +3,7 @@ import { SqliteTraceStore } from "./sqliteStore";
 import Database from "better-sqlite3";
 import { runMigrations } from "./sqlite/migrate";
 import { loadPhase2FixtureTrace } from "./testUtils";
-import type { TraceEvent } from "@afr/contracts";
+import type { TraceEvent } from "@aerograph/contracts";
 
 describe("collector: SqliteTraceStore", () => {
   let db: any;

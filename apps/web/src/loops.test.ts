@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TraceAnalysis } from "@afr/contracts";
+import type { TraceAnalysis } from "@aerograph/contracts";
 import { mapLoopsToHighlights, getLoopWarningSpanIds, getFirstLoopSpanId } from "./loops";
 
 const EMPTY_ANALYSIS: TraceAnalysis = {

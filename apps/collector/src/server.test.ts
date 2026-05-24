@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "./server";
 import type { Database } from "better-sqlite3";
-import { validateTraceForkResponse, validateTraceLineageGraph, validateTraceDiffResult, validateTraceAnalysis } from "@afr/contracts";
+import { validateTraceForkResponse, validateTraceLineageGraph, validateTraceDiffResult, validateTraceAnalysis } from "@aerograph/contracts";
 import { loadPhase2FixtureTrace } from "./testUtils";
 
 describe("collector: API", () => {
