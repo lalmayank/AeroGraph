@@ -42,8 +42,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@aerograph/contracts": "*",
-    "@aerograph/sdk": "*",
+    "@aerograph/contracts": "^0.1.0",
+    "@aerograph/sdk": "^0.1.0",
     "langchain": "^0.3.0",
     "@langchain/core": "^0.3.0"
   },
