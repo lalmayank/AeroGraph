@@ -1,4 +1,4 @@
-# Tasks: Agent Flight Recorder — Phase 2 & 2.5
+# Tasks: AeroGraph — Phase 2 & 2.5
 
 **Input**: Design documents from `/specs/002-trace-branching/`
 

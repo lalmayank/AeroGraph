@@ -1,4 +1,4 @@
-# Feature Specification: Agent Flight Recorder
+# Feature Specification: AeroGraph
 
 **Feature Branch**: `001-agent-flight-recorder`
 
@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Build an open-source AI agent flight recorder that captures prompts, responses, tool calls, and handoffs across multi-agent workflows, then visualizes them as an interactive trace graph with payload inspection, replay, diffing, loop detection, and failure highlighting."
+**Input**: User description: "Build an open-source AI AeroGraph that captures prompts, responses, tool calls, and handoffs across multi-agent workflows, then visualizes them as an interactive trace graph with payload inspection, replay, diffing, loop detection, and failure highlighting."
 
 ## Phase Scope
 

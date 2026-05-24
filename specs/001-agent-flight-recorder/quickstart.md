@@ -1,6 +1,6 @@
 # Phase 1 MVP Quickstart & Smoke Checklist
 
-This document verifies the end-to-end functionality of the Agent Flight Recorder (Phase 1 MVP).
+This document verifies the end-to-end functionality of the AeroGraph (Phase 1 MVP).
 
 ## Running the Stack
 

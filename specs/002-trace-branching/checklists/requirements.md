@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Agent Flight Recorder — Phase 2 & 2.5
+# Specification Quality Checklist: AeroGraph — Phase 2 & 2.5
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-24

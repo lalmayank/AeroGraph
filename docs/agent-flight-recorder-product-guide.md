@@ -1,6 +1,6 @@
-# Agent Flight Recorder Product Guide
+# AeroGraph Product Guide
 
-Agent Flight Recorder is a local-first tracing system for AI agent workflows. It captures the important events that happen during a run, stores them in a shared contract, and makes them inspectable as a trace graph so developers can debug behavior instead of guessing from logs.
+AeroGraph is a local-first tracing system for AI agent workflows. It captures the important events that happen during a run, stores them in a shared contract, and makes them inspectable as a trace graph so developers can debug behavior instead of guessing from logs.
 
 The core idea is simple:
 
@@ -14,7 +14,7 @@ The core idea is simple:
 
 ### Individual developers
 
-A developer building a single agent can use Agent Flight Recorder to answer questions like:
+A developer building a single agent can use AeroGraph to answer questions like:
 
 - What prompt did the model actually receive?
 - Which tool was called, with what input, and what output came back?
@@ -31,7 +31,7 @@ Anyone embedding the recorder into their own code uses the SDK directly. The SDK
 
 ### LangChain users
 
-LangChain users can connect the adapter and automatically translate LangChain callback events into Agent Flight Recorder events.
+LangChain users can connect the adapter and automatically translate LangChain callback events into AeroGraph events.
 
 ## End-to-End User Flow
 
@@ -115,7 +115,7 @@ If your runtime already has stable run IDs, pass them in as `spanId` so traces l
 
 ## LangChain Integration
 
-The LangChain adapter lives in `@afr/adapter-langchain`. It converts LangChain callback events into Agent Flight Recorder events using a deterministic mapping.
+The LangChain adapter lives in `@afr/adapter-langchain`. It converts LangChain callback events into AeroGraph events using a deterministic mapping.
 
 ### How it works
 
@@ -354,4 +354,4 @@ This is the recommended path for users already on LangChain: keep the agent code
 
 ## Bottom Line
 
-Agent Flight Recorder is the tracing layer for people who want inspectable, replay-safe AI execution records. The SDK is the API users call in their code, the collector stores and serves the traces, and the LangChain adapter makes the system usable in modern LangChain applications without changing the agent logic itself.
+AeroGraph is the tracing layer for people who want inspectable, replay-safe AI execution records. The SDK is the API users call in their code, the collector stores and serves the traces, and the LangChain adapter makes the system usable in modern LangChain applications without changing the agent logic itself.

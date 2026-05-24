@@ -1,4 +1,4 @@
-# Feature Specification: Agent Flight Recorder — Phase 2 & 2.5 (Trace Branching & Advanced Observability)
+# Feature Specification: AeroGraph — Phase 2 & 2.5 (Trace Branching & Advanced Observability)
 
 **Feature Branch**: `002-phase2-branching`
 
@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Design Phase 2 for Agent Flight Recorder. Goals: trace branching/forking, trace diff visualization, loop detection heuristics, multi-agent execution trees, replay timeline improvements, branch lineage tracking. Phase 2.5 extending with LangGraph state tracking, LCEL streaming telemetry, RAG payload inspection, Human Checkpoint Events. Constraints: preserve append-only replay-safe storage, maintain strict contract-schema governance, no distributed infrastructure yet, local database remains source of truth, deterministic reconstruction is mandatory. NO execution orchestration, NO runtime resume engines, NO non-deterministic analysis, NO replay mutation."
+**Input**: User description: "Design Phase 2 for AeroGraph. Goals: trace branching/forking, trace diff visualization, loop detection heuristics, multi-agent execution trees, replay timeline improvements, branch lineage tracking. Phase 2.5 extending with LangGraph state tracking, LCEL streaming telemetry, RAG payload inspection, Human Checkpoint Events. Constraints: preserve append-only replay-safe storage, maintain strict contract-schema governance, no distributed infrastructure yet, local database remains source of truth, deterministic reconstruction is mandatory. NO execution orchestration, NO runtime resume engines, NO non-deterministic analysis, NO replay mutation."
 
 ## User Scenarios & Testing *(mandatory)*
 

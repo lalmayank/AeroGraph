@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Agent Flight Recorder
+# Specification Quality Checklist: AeroGraph
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-20

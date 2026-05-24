@@ -1,7 +1,7 @@
 # ADR 0006: Multi-Provider Integration Strategy
 
 ## Context
-Agent Flight Recorder needs robust governance across various environments. We leverage the Spec Kit framework (`.specify/`) and agent tools (`.agents/`) for local specification management, but we also run checks in GitHub Actions (`.github/agents/`). Keeping these integration points synchronized without overwriting protected GitHub infrastructure is critical.
+AeroGraph needs robust governance across various environments. We leverage the Spec Kit framework (`.specify/`) and agent tools (`.agents/`) for local specification management, but we also run checks in GitHub Actions (`.github/agents/`). Keeping these integration points synchronized without overwriting protected GitHub infrastructure is critical.
 
 ## Decision
 We will maintain strict boundaries for our multi-provider integrations:

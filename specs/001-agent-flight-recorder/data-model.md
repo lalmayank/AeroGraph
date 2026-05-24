@@ -1,4 +1,4 @@
-# Data Model — Agent Flight Recorder
+# Data Model — AeroGraph
 
 This describes the domain entities and the Phase 1 persistence model.
 

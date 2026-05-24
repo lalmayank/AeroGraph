@@ -1,4 +1,4 @@
-# Quickstart: Agent Flight Recorder Observability (Phase 2.5)
+# Quickstart: AeroGraph Observability (Phase 2.5)
 
 To start capturing advanced observability data:
 

@@ -1,4 +1,4 @@
-# Agent Flight Recorder
+# AeroGraph
 
 An open-source flight recorder for AI agent workflows — local-first, append-only, and replay-safe.
 
@@ -86,4 +86,19 @@ open http://localhost:5173
 - **Append-only**: events and lineage edges are never mutated; forking copies prefix events
 - **Deterministic**: ordering, diff, and loop analysis produce the same result for the same input
 
-See `specs/002-trace-branching/` for Phase 2 design artifacts.
+
+## How This Project Is Split
+
+This repository serves two different audiences:
+
+- Contributors work in the monorepo and run the collector, web UI, demos, and tests locally.
+- End users consume the reusable packages, usually `@afr/sdk` and `@afr/adapter-langchain`, from their own application.
+
+That split is intentional. The repo contains the product, but the public integration surface is the SDK and adapters. The collector and web UI are the viewing and storage layer that can be run locally or hosted separately.
+
+## Deployment Model
+
+There are two supported ways to ship AFR:
+
+- **Self-hosted**: users run the collector and web UI themselves, then point their app at the collector endpoint.
+- **Hosted**: you run the collector and web UI as a service, and users only install the SDK or adapter in their own project.

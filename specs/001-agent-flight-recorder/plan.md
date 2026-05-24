@@ -1,4 +1,4 @@
-# Implementation Plan: Agent Flight Recorder
+# Implementation Plan: AeroGraph
 
 **Branch**: `001-agent-flight-recorder` | **Date**: 2026-05-20 | **Spec**: specs/001-agent-flight-recorder/spec.md
 

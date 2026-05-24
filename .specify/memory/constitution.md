@@ -19,7 +19,7 @@ Sync Impact Report
 - Follow-up TODOs: none
 -->
 
-# Agent Flight Recorder Constitution
+# AeroGraph Constitution
 
 ## Core Principles
 

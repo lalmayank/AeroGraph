@@ -13,7 +13,7 @@ async function run() {
     parentSpanId: root.spanId,
     toolId: "tool-search",
     toolName: "search",
-    input: { query: "agent flight recorder" }
+    input: { query: "AeroGraph" }
   });
   await frPlanner.toolResult({
     parentSpanId: toolCall.spanId,

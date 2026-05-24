@@ -1,4 +1,4 @@
-# Implementation Plan: Agent Flight Recorder — Phase 2 & 2.5
+# Implementation Plan: AeroGraph — Phase 2 & 2.5
 
 **Branch**: `002-trace-branching` | **Date**: 2026-05-24 | **Spec**: [specs/002-trace-branching/spec.md](file:///c:/Users/siana/Desktop/Sian/Sian/OpenSource/agentdev/specs/002-trace-branching/spec.md)
 

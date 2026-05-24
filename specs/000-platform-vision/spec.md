@@ -1,5 +1,5 @@
 # Executive Summary  
-AI agent frameworks (CrewAI, LangChain, AutoGen, etc.) enable powerful multi-step workflows, but they lack visibility into **why** agents behave as they do. Users and developers suffer from mysterious failures, hidden token limits, and coordination breakdowns【1†L168-L172】【7†L100-L104】. This project proposes an **“Agent Flight Recorder”** – a unified observability/debugging tool for multi-agent AI. It captures every prompt, response, tool call, and agent handoff as a structured trace, visualized as a flow diagram with payload inspection. Developers can click any node to view details, replay execution branches, diff outcomes, and detect loops or failed steps【35†L24-L33】【35†L106-L114】. Unlike generic APMs, it’s built for AI workflows: full-context, token-level traces, with human-in-the-loop checkpoints and side-effect tracking【35†L24-L33】【35†L35-L43】.  
+AI agent frameworks (CrewAI, LangChain, AutoGen, etc.) enable powerful multi-step workflows, but they lack visibility into **why** agents behave as they do. Users and developers suffer from mysterious failures, hidden token limits, and coordination breakdowns【1†L168-L172】【7†L100-L104】. This project proposes an **“AeroGraph”** – a unified observability/debugging tool for multi-agent AI. It captures every prompt, response, tool call, and agent handoff as a structured trace, visualized as a flow diagram with payload inspection. Developers can click any node to view details, replay execution branches, diff outcomes, and detect loops or failed steps【35†L24-L33】【35†L106-L114】. Unlike generic APMs, it’s built for AI workflows: full-context, token-level traces, with human-in-the-loop checkpoints and side-effect tracking【35†L24-L33】【35†L35-L43】.  
 
 With integrations (LangChain, AutoGen, CrewAI, LangGraph, etc.), this open-source tool will plug into existing stacks via adapters (e.g. callbacks or OpenTelemetry hooks) to emit a common JSON trace. A web or VS Code UI then displays the conversation timeline, highlights failures, and allows replay/forking for in-depth debugging【35†L24-L33】【1†L225-L230】. This addresses a **persistent pain**: opaque AI behavior. By providing “explainability in action” (cf. Honeycomb’s “Agent Timeline”【1†L168-L172】【1†L225-L230】 or Tracewire’s DAG view【35†L24-L33】), the tool helps teams diagnose issues in minutes instead of hours. 
 
@@ -363,7 +363,7 @@ This sequence shows a developer’s agent emitting spans that the server collect
 **Project Roadmap (Timeline)**  
 ```mermaid
 gantt
-    title Agent Flight Recorder Roadmap
+    title AeroGraph Roadmap
     dateFormat  YYYY-MM
     section MVP
     Instrument core frameworks      :done,    des1, 2026-06, 1M

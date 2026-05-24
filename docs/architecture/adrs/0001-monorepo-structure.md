@@ -1,7 +1,7 @@
 # ADR 0001: Monorepo Structure
 
 ## Context
-The Agent Flight Recorder project consists of multiple distinct but tightly coupled pieces: a collector backend, a frontend visualization web app, shared SDKs, canonical schema contracts, and various framework adapters (e.g., LangChain). These components must evolve synchronously, especially during Phase 1 where the core event schema is being rapidly established and validated across the stack.
+The AeroGraph project consists of multiple distinct but tightly coupled pieces: a collector backend, a frontend visualization web app, shared SDKs, canonical schema contracts, and various framework adapters (e.g., LangChain). These components must evolve synchronously, especially during Phase 1 where the core event schema is being rapidly established and validated across the stack.
 
 ## Decision
 We will use a TypeScript-based NPM workspaces monorepo structure, strictly separated into `apps/` (runnable services like collector and web) and `packages/` (reusable libraries like contracts, sdk, and adapters).

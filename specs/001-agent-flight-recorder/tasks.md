@@ -1,4 +1,4 @@
-# Tasks: Agent Flight Recorder — Phase 1 (MVP)
+# Tasks: AeroGraph — Phase 1 (MVP)
 
 **Scope Guard (CRITICAL)**: This task list is **Phase 1 only**. Do **not** implement Phase 2/Phase 3 items (OpenTelemetry pipelines, advanced replay engines, distributed event sourcing, queues, microservices, Kubernetes, scalable infrastructure).
 

@@ -1,6 +1,6 @@
 # Replay & Playback Model
 
-The primary value of the Agent Flight Recorder is the ability to predictably replay, fork, and inspect past executions.
+The primary value of the AeroGraph is the ability to predictably replay, fork, and inspect past executions.
 
 ## Append-Only Foundation (ADR-0004)
 Trace events are never modified. An update to an entity (e.g., an agent failing) is modeled as a new `error` event appended to the log, linking back to the original span. This append-only design provides a mathematically sound, time-ordered ledger.

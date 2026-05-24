@@ -15,7 +15,7 @@ async function main() {
 
   // Use a fake model to simulate the LLM call without needing OpenAI keys
   const model = new FakeListChatModel({
-    responses: ["This is a simulated response for the Agent Flight Recorder Demo!"],
+    responses: ["This is a simulated response for the AeroGraph Demo!"],
   });
 
   console.log("Invoking model...");

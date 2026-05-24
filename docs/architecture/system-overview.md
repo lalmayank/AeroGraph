@@ -1,6 +1,6 @@
 # System Overview
 
-This document provides a high-level architectural view of the Agent Flight Recorder (AFR).
+This document provides a high-level architectural view of the AeroGraph (AFR).
 
 ## Monorepo Architecture (ADR-0001)
 The system is built as a TypeScript monorepo, strictly divided into:

@@ -1,4 +1,4 @@
-# Agent Flight Recorder Collector
+# AeroGraph Collector
 
 The collector is responsible for ingesting, validating, and persisting trace events.
 

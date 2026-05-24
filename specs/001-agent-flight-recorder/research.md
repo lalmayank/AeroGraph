@@ -1,4 +1,4 @@
-# Research & Decisions — Agent Flight Recorder
+# Research & Decisions — AeroGraph
 
 This document captures Phase 0 decisions needed to produce a concrete implementation plan.
 

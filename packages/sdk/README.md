@@ -1,4 +1,4 @@
-# Agent Flight Recorder SDK
+# AeroGraph SDK
 
 This package provides a `FlightRecorder` client for emitting normalized trace events from any agent or framework.
 
