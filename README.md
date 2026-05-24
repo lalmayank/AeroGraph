@@ -1,6 +1,13 @@
 # AeroGraph
 
-An open-source flight recorder for AI agent workflows — local-first, append-only, and replay-safe.
+An open-source flight recorder for AI agent workflows: local-first, append-only, and replay-safe.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/SGcpu/AeroGraph/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/SGcpu/AeroGraph/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/SGcpu/AeroGraph?style=for-the-badge)](https://github.com/SGcpu/AeroGraph/blob/main/LICENSE.md)
+[![Repo Stars](https://img.shields.io/github/stars/SGcpu/AeroGraph?style=for-the-badge)](https://github.com/SGcpu/AeroGraph/stargazers)
+[![npm: @aerograph/contracts](https://img.shields.io/npm/v/@aerograph/contracts?style=for-the-badge&label=%40aerograph%2Fcontracts)](https://www.npmjs.com/package/@aerograph/contracts)
+[![npm: @aerograph/sdk](https://img.shields.io/npm/v/@aerograph/sdk?style=for-the-badge&label=%40aerograph%2Fsdk)](https://www.npmjs.com/package/@aerograph/sdk)
+[![npm: @aerograph/adapter-langchain](https://img.shields.io/npm/v/@aerograph/adapter-langchain?style=for-the-badge&label=%40aerograph%2Fadapter-langchain)](https://www.npmjs.com/package/@aerograph/adapter-langchain)
 
 ## What it does
 
