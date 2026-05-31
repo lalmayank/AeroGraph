@@ -6,7 +6,7 @@ Minimal runnable example demonstrating the AeroGraph Python SDK.
 Usage:
     # Start the collector first:
     #   npm run dev -w apps-collector (from repo root)
-    
+
     cd python/aerograph-sdk
     pip install -e .
     python examples/minimal_trace.py
@@ -77,7 +77,7 @@ def run() -> None:
             tool_name="SearchTool",
             output={"results": ["result1", "result2"]},
         )
-        print(f"[AeroGraph] Emitted tool_result")
+        print("[AeroGraph] Emitted tool_result")
 
         # --- Emit a state snapshot with hash ---
         full_state = {"question": "What is AeroGraph?", "step": 1, "complete": True}
@@ -86,9 +86,13 @@ def run() -> None:
             node_name="answerNode",
             full_state=full_state,
         )
-        print(f"[AeroGraph] Emitted state_snapshot (hash={snap_event.payload.stateHash})")
+        print(
+            f"[AeroGraph] Emitted state_snapshot (hash={snap_event.payload.stateHash})"
+        )
 
-        print(f"\n[AeroGraph] Done. View trace at: http://localhost:5173/traces/{recorder.trace_id}")
+        print(
+            f"\n[AeroGraph] Done. View trace at: http://localhost:5173/traces/{recorder.trace_id}"
+        )
 
     except Exception as e:
         print(f"[AeroGraph] Error: {e}", file=sys.stderr)

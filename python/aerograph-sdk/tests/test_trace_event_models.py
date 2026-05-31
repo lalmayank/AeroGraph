@@ -11,10 +11,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
-from pydantic import ValidationError
 
 from aerograph_sdk.contracts.generated import (
     SCHEMA_VERSION,
@@ -228,7 +226,11 @@ def test_retriever_event_has_documents() -> None:
         payload={
             "query": "agent observability",
             "documents": [
-                {"pageContent": "AeroGraph records traces.", "metadata": {"source": "docs"}, "score": 0.9}
+                {
+                    "pageContent": "AeroGraph records traces.",
+                    "metadata": {"source": "docs"},
+                    "score": 0.9,
+                }
             ],
         },
         links=[],

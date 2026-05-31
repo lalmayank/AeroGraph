@@ -28,8 +28,17 @@ from pathlib import Path
 
 # Paths (all relative to repo root)
 REPO_ROOT = Path(__file__).parents[3]
-ARTIFACT_PATH = REPO_ROOT / "packages" / "schema-exporter" / "artifacts" / "1.0.0" / "trace-event.schema.json"
-OUTPUT_PATH = Path(__file__).parents[1] / "src" / "aerograph_sdk" / "contracts" / "generated.py"
+ARTIFACT_PATH = (
+    REPO_ROOT
+    / "packages"
+    / "schema-exporter"
+    / "artifacts"
+    / "1.0.0"
+    / "trace-event.schema.json"
+)
+OUTPUT_PATH = (
+    Path(__file__).parents[1] / "src" / "aerograph_sdk" / "contracts" / "generated.py"
+)
 CONFIG_PATH = Path(__file__).parent / "datamodel-codegen.toml"
 
 
@@ -45,16 +54,18 @@ def main() -> None:
     # Extract the pythonCodegenSchema to a temp file
     import json
     import tempfile
-    
+
     with open(ARTIFACT_PATH, "r", encoding="utf-8") as f:
         artifact = json.load(f)
-        
+
     python_schema = artifact.get("pythonCodegenSchema")
     if not python_schema:
         print("ERROR: pythonCodegenSchema not found in artifact", file=sys.stderr)
         sys.exit(1)
-        
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as temp_f:
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as temp_f:
         json.dump(python_schema, temp_f)
         temp_schema_path = temp_f.name
 
@@ -93,31 +104,37 @@ def main() -> None:
         capture_output=True,
         text=True,
     )
-    
+
     # Cleanup temp file
     import os
+
     try:
         os.remove(temp_schema_path)
     except OSError:
         pass
 
     if result.returncode != 0:
-        print(f"ERROR: datamodel-code-generator failed:\n{result.stderr}", file=sys.stderr)
+        print(
+            f"ERROR: datamodel-code-generator failed:\n{result.stderr}", file=sys.stderr
+        )
         sys.exit(1)
 
     print(f"[generate_contracts] [OK] Generated {OUTPUT_PATH}")
 
     # Append SCHEMA_VERSION
     import json
+
     with open(ARTIFACT_PATH) as f:
         artifact = json.load(f)
     version = artifact.get("schemaVersion", "1.0.0")
-    
+
     with open(OUTPUT_PATH, "a") as f:
-        f.write(f"\n# Injected by generate_contracts.py\n")
+        f.write("\n# Injected by generate_contracts.py\n")
         f.write(f"SCHEMA_VERSION = '{version}'\n")
-        f.write("TraceEvent = PromptEvent | ResponseEvent | ToolCallEvent | ToolResultEvent | HandoffEvent | ErrorEvent | NoteEvent | StateSnapshotEvent | RetrieverEvent | CheckpointEvent\n")
-        
+        f.write(
+            "TraceEvent = PromptEvent | ResponseEvent | ToolCallEvent | ToolResultEvent | HandoffEvent | ErrorEvent | NoteEvent | StateSnapshotEvent | RetrieverEvent | CheckpointEvent\n"
+        )
+
     print(
         "[generate_contracts] NOTE: Review the generated file for correctness "
         "before committing."

@@ -8,12 +8,9 @@ Tests use pytest-httpx to mock HTTP responses without a real collector.
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import MagicMock
 
 import httpx
 import pytest
-import pytest_asyncio
 
 from aerograph_sdk import FlightRecorder, EmissionError
 from aerograph_sdk.contracts.generated import TraceEventStatus
@@ -63,6 +60,7 @@ def test_emit_prompt_posts_to_collector(httpx_mock) -> None:
 
     body = req.content.decode()
     import json
+
     parsed = json.loads(body)
     assert parsed["kind"] == "prompt"
     assert parsed["traceId"] == "t_test_001"
@@ -92,7 +90,6 @@ def test_emit_raises_on_non_2xx(httpx_mock) -> None:
     httpx_mock.add_response(status_code=422, text="Unprocessable Entity")
     recorder = make_recorder()
 
-    from aerograph_sdk.contracts.generated import PromptEvent
     from aerograph_sdk.events import build_prompt_event
 
     event = build_prompt_event(
@@ -138,7 +135,9 @@ def test_emit_all_event_kinds_sync(httpx_mock) -> None:
         query="search",
         documents=[{"pageContent": "doc", "metadata": {}}],
     )
-    recorder.checkpoint(parent_span_id=root, checkpoint_id="c1", reason="test", state={})
+    recorder.checkpoint(
+        parent_span_id=root, checkpoint_id="c1", reason="test", state={}
+    )
 
     assert len(httpx_mock.get_requests()) == 10
 
@@ -155,27 +154,31 @@ def test_emit_batch_sends_single_request(httpx_mock) -> None:
     from aerograph_sdk.events import build_prompt_event, build_response_event
 
     events = [
-        build_prompt_event(trace_id="t_test", actor_id="a1", text="Q", parent_span_id=None),
-        build_response_event(trace_id="t_test", actor_id="a1", text="A", parent_span_id=None),
+        build_prompt_event(
+            trace_id="t_test", actor_id="a1", text="Q", parent_span_id=None
+        ),
+        build_response_event(
+            trace_id="t_test", actor_id="a1", text="A", parent_span_id=None
+        ),
     ]
     recorder = make_recorder()
-    ordered = recorder.emit_batch(events)
+    recorder.emit_batch(events)
 
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
-
+    req = requests[0]
     import json
-    body = json.loads(requests[0].content)
-    assert isinstance(body, list)
-    assert len(body) == 2
+    payload = json.loads(req.read())
+    assert len(payload) == 2
+    kinds = {p["kind"] for p in payload}
+    assert kinds == {"prompt", "response"}
 
 
 def test_emit_batch_orders_events_deterministically(httpx_mock) -> None:
     """emit_batch() orders events by occurredAt → spanId → kind."""
     httpx_mock.add_response(status_code=201)
 
-    ts = "2026-05-31T00:00:00.000Z"
-    from aerograph_sdk.events import build_prompt_event, build_response_event
+    from aerograph_sdk.events import build_prompt_event
 
     # Deliberately create in reverse timestamp order
     event_a = build_prompt_event(
@@ -242,8 +245,12 @@ async def test_emit_batch_async_sends_single_request(httpx_mock) -> None:
     from aerograph_sdk.events import build_prompt_event
 
     events = [
-        build_prompt_event(trace_id="t_test", actor_id="a1", text="Q", parent_span_id=None),
-        build_prompt_event(trace_id="t_test", actor_id="a1", text="Q2", parent_span_id=None),
+        build_prompt_event(
+            trace_id="t_test", actor_id="a1", text="Q", parent_span_id=None
+        ),
+        build_prompt_event(
+            trace_id="t_test", actor_id="a1", text="Q2", parent_span_id=None
+        ),
     ]
     recorder = make_recorder()
     ordered = await recorder.emit_batch_async(events)

@@ -126,7 +126,9 @@ def test_sort_empty_list() -> None:
 
 def test_sort_single_event() -> None:
     """Sorting a single-event list returns it unchanged."""
-    events = [{"occurredAt": "2026-05-31T00:00:00.000Z", "spanId": "s1", "kind": "prompt"}]
+    events = [
+        {"occurredAt": "2026-05-31T00:00:00.000Z", "spanId": "s1", "kind": "prompt"}
+    ]
     result = sort_trace_events_deterministic(events)  # type: ignore[arg-type]
     assert len(result) == 1
     assert result[0]["spanId"] == "s1"

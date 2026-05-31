@@ -21,15 +21,23 @@ Usage:
 
 from __future__ import annotations
 
-import importlib
 import json
 import sys
 from pathlib import Path
 
 # Paths
 REPO_ROOT = Path(__file__).parents[3]
-ARTIFACT_PATH = REPO_ROOT / "packages" / "schema-exporter" / "artifacts" / "1.0.0" / "trace-event.schema.json"
-GENERATED_PATH = Path(__file__).parents[1] / "src" / "aerograph_sdk" / "contracts" / "generated.py"
+ARTIFACT_PATH = (
+    REPO_ROOT
+    / "packages"
+    / "schema-exporter"
+    / "artifacts"
+    / "1.0.0"
+    / "trace-event.schema.json"
+)
+GENERATED_PATH = (
+    Path(__file__).parents[1] / "src" / "aerograph_sdk" / "contracts" / "generated.py"
+)
 
 EXPECTED_KINDS = [
     "prompt",
@@ -121,7 +129,9 @@ def main() -> None:
 
 def _report(errors: list[str]) -> None:
     if not errors:
-        print("[check_generated_contracts] [OK] No drift detected. Generated contracts are consistent.")
+        print(
+            "[check_generated_contracts] [OK] No drift detected. Generated contracts are consistent."
+        )
         sys.exit(0)
     else:
         print("[check_generated_contracts] ✗ Drift detected:", file=sys.stderr)

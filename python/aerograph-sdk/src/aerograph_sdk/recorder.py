@@ -24,7 +24,6 @@ from typing import Any, Optional, Union
 import httpx
 
 from aerograph_sdk.contracts.generated import (
-    SCHEMA_VERSION,
     CheckpointEvent,
     ErrorEvent,
     HandoffEvent,
@@ -36,7 +35,6 @@ from aerograph_sdk.contracts.generated import (
     ToolCallEvent,
     ToolResultEvent,
     TraceEventStatus,
-    TraceEventKind,
     TraceLink,
 )
 from aerograph_sdk.events import (
@@ -216,7 +214,9 @@ class FlightRecorder:
             raise EmissionError(response.status_code, response.text)
         return ordered
 
-    async def emit_batch_async(self, events: list[_TraceEventModel]) -> list[_TraceEventModel]:
+    async def emit_batch_async(
+        self, events: list[_TraceEventModel]
+    ) -> list[_TraceEventModel]:
         """
         Emit multiple events as a single batch request (async).
 
@@ -246,7 +246,12 @@ class FlightRecorder:
     def _sort_batch(self, events: list[_TraceEventModel]) -> list[_TraceEventModel]:
         """Sort events deterministically: occurredAt → spanId → kind."""
         raw = [
-            {"occurredAt": e.occurredAt, "spanId": e.spanId, "kind": e.kind, "_event": e}
+            {
+                "occurredAt": e.occurredAt,
+                "spanId": e.spanId,
+                "kind": e.kind,
+                "_event": e,
+            }
             for e in events
         ]
         sorted_raw = sort_trace_events_deterministic(raw)  # type: ignore[arg-type]

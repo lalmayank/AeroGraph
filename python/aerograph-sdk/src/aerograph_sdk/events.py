@@ -45,7 +45,6 @@ from aerograph_sdk.contracts.generated import (
     ToolResultEvent,
     ToolResultPayload,
     TraceEventStatus,
-    TraceEventKind,
     TraceLink,
 )
 from aerograph_sdk.ids import new_span_id
@@ -53,8 +52,10 @@ from aerograph_sdk.ids import new_span_id
 
 def _now_iso() -> str:
     """Return the current UTC time as an ISO 8601 string (RFC 3339 compatible)."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + \
-           f"{datetime.now(timezone.utc).microsecond // 1000:03d}Z"
+    return (
+        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.")
+        + f"{datetime.now(timezone.utc).microsecond // 1000:03d}Z"
+    )
 
 
 def _utcnow() -> str:
@@ -208,7 +209,9 @@ def build_handoff_event(
         kind="handoff",
         status=status,
         title="handoff",
-        payload=HandoffPayload(fromAgentId=from_agent_id, toAgentId=to_agent_id, reason=reason),
+        payload=HandoffPayload(
+            fromAgentId=from_agent_id, toAgentId=to_agent_id, reason=reason
+        ),
         links=links or [],
     )
 
@@ -407,11 +410,14 @@ def compare_trace_events(
     return (a["kind"] > b["kind"]) - (a["kind"] < b["kind"])
 
 
-def sort_trace_events_deterministic(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def sort_trace_events_deterministic(
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """
     Sort trace events using the deterministic comparator.
 
     Mirrors sortTraceEventsDeterministic from @aerograph/contracts.
     """
     import functools
+
     return sorted(events, key=functools.cmp_to_key(compare_trace_events))

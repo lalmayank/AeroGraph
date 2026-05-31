@@ -14,10 +14,8 @@ Or set AEROGRAPH_COLLECTOR_URL env var.
 
 from __future__ import annotations
 
-import json
 import os
 import time
-from typing import Any
 
 import httpx
 import pytest
@@ -72,8 +70,12 @@ def test_emit_and_retrieve_trace() -> None:
     root_span = recorder.new_span_id()
     recorder.prompt(parent_span_id=None, span_id=root_span, text="Smoke test prompt")
     recorder.response(parent_span_id=root_span, text="Smoke test response")
-    recorder.tool_call(parent_span_id=root_span, tool_id="t-smoke", input={"query": "test"})
-    recorder.tool_result(parent_span_id=root_span, tool_id="t-smoke", output={"result": "ok"})
+    recorder.tool_call(
+        parent_span_id=root_span, tool_id="t-smoke", input={"query": "test"}
+    )
+    recorder.tool_result(
+        parent_span_id=root_span, tool_id="t-smoke", output={"result": "ok"}
+    )
     recorder.note(parent_span_id=root_span, payload={"test": True})
 
     # Give collector a moment to persist
@@ -81,7 +83,9 @@ def test_emit_and_retrieve_trace() -> None:
 
     # Retrieve and verify
     response = httpx.get(f"{COLLECTOR_URL}/v1/traces/{trace_id}")
-    assert response.is_success, f"Failed to retrieve trace: {response.status_code} {response.text}"
+    assert response.is_success, (
+        f"Failed to retrieve trace: {response.status_code} {response.text}"
+    )
 
     trace_data = response.json()
     events = trace_data.get("events", [])

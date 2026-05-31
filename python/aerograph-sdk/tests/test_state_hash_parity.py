@@ -91,14 +91,18 @@ def test_key_ordering_is_irrelevant() -> None:
     """Hash must be identical regardless of dict key insertion order."""
     state_a = {"z": 1, "a": 2, "m": 3}
     state_b = {"a": 2, "m": 3, "z": 1}
-    assert get_deterministic_state_hash(state_a) == get_deterministic_state_hash(state_b)
+    assert get_deterministic_state_hash(state_a) == get_deterministic_state_hash(
+        state_b
+    )
 
 
 def test_nested_key_ordering_is_irrelevant() -> None:
     """Key sorting applies recursively to nested objects."""
     state_a = {"outer": {"z": 1, "a": 2}}
     state_b = {"outer": {"a": 2, "z": 1}}
-    assert get_deterministic_state_hash(state_a) == get_deterministic_state_hash(state_b)
+    assert get_deterministic_state_hash(state_a) == get_deterministic_state_hash(
+        state_b
+    )
 
 
 def test_array_ordering_matters() -> None:
@@ -110,7 +114,7 @@ def test_array_ordering_matters() -> None:
 
 def test_non_finite_float_normalized_to_null() -> None:
     """NaN and Infinity must be normalized to null (matching JS JSON.stringify)."""
-    import math
+
     h_nan = get_deterministic_state_hash({"val": float("nan")})
     h_inf = get_deterministic_state_hash({"val": float("inf")})
     h_ninf = get_deterministic_state_hash({"val": float("-inf")})

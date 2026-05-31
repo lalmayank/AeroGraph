@@ -38,7 +38,7 @@ def _sort_keys_recursive(obj: Any) -> Any:
     if isinstance(obj, (int, float, str)):
         return obj
     if isinstance(obj, dict):
-        return {k: _sort_keys_recursive(v) for k in sorted(obj.keys())}
+        return {k: _sort_keys_recursive(obj[k]) for k in sorted(obj.keys())}
     if isinstance(obj, (list, tuple)):
         return [_sort_keys_recursive(item) for item in obj]
     return obj
@@ -169,7 +169,9 @@ def compute_state_diff(
     for key, value in current_state.items():
         prev_value = prev_state.get(key)
         current_canonical = _canonicalize({key: value}) if value is not None else "null"
-        prev_canonical = _canonicalize({key: prev_value}) if prev_value is not None else "null"
+        prev_canonical = (
+            _canonicalize({key: prev_value}) if prev_value is not None else "null"
+        )
         if current_canonical != prev_canonical:
             diff[key] = value
 
