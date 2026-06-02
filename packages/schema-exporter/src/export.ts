@@ -181,8 +181,8 @@ export function exportSchemas(options?: { dryRun?: boolean }): ExportResult {
 
   const manifest: Manifest = {
     schemaVersion,
-    exporterPackageVersion: "0.1.0",
-    contractsPackageVersion: "0.1.0",
+    exporterPackageVersion: "0.2.0",
+    contractsPackageVersion: "0.2.0",
     generatedAt: now,
     artifacts: [TRACE_EVENT_SCHEMA_FILE]
   };
