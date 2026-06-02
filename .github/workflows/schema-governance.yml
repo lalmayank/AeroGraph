@@ -1,0 +1,21 @@
+name: Schema Governance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "packages/contracts/**"
+      - "packages/schema-exporter/**"
+
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - name: Check Schema Drift
+        run: npm run schema:check -w packages/schema-exporter
