@@ -8,8 +8,9 @@ class MockRecorder(FlightRecorder):
         super().__init__(endpoint="http://localhost", actor={"id": "test-agent"})
         self.events = []
 
-    def record(self, event: Any) -> None:
+    def emit(self, event: Any) -> Any:
         self.events.append(event)
+        return event
 
 def test_on_llm_error():
     recorder = MockRecorder()

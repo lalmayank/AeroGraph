@@ -17,5 +17,7 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
+      - name: Build schema-exporter
+        run: npm run build -w packages/schema-exporter
       - name: Check Schema Drift
         run: npm run schema:check -w packages/schema-exporter
