@@ -21,4 +21,7 @@ specs/003-python-support/plan.md
 Current implementation tasks:
 specs/001-agent-flight-recorder/tasks.md
 
+
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
 <!-- SPECKIT END -->
