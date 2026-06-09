@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 from aerograph_sdk.recorder import FlightRecorder
 from aerograph_sdk.ids import new_trace_id
 
-from .mapping import map_llm_start, map_llm_end, map_tool_start, map_tool_end, map_error
+from .mapping import map_llm_start, map_llm_end, map_tool_start, map_tool_end, map_error, map_chain_start
 from .streaming import StreamingTracker
 from .retriever import RetrieverTracker
 from .langgraph import map_state_snapshot, map_checkpoint
@@ -25,6 +25,38 @@ class AeroGraphCallbackHandler(BaseCallbackHandler):
         self.trace_id = trace_id or new_trace_id()
         self.streaming_tracker = StreamingTracker()
         self.retriever_tracker = RetrieverTracker()
+        # Track emitted chain run_ids so we don't double-emit for nested chains
+        self._emitted_chain_runs: set[uuid.UUID] = set()
+
+    def on_chain_start(
+        self,
+        serialized: Optional[Dict[str, Any]],
+        inputs: Dict[str, Any],
+        *,
+        run_id: uuid.UUID,
+        parent_run_id: Optional[uuid.UUID] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        name: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Emit a note event for each chain/agent run.
+
+        This ensures every parent_run_id referenced by child events (LLM calls,
+        tool calls) has a corresponding node in the AeroGraph trace graph. Without
+        this, child nodes appear disconnected/floating in the UI.
+        """
+        if run_id in self._emitted_chain_runs:
+            return  # avoid duplicate nodes for re-entrant chains
+        self._emitted_chain_runs.add(run_id)
+        event = map_chain_start(
+            serialized=serialized,
+            run_id=run_id,
+            parent_run_id=parent_run_id,
+            trace_id=self.trace_id,
+            name=name,
+        )
+        self.recorder.emit(event)
 
     def on_llm_start(
         self,
@@ -56,6 +88,7 @@ class AeroGraphCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[uuid.UUID] = None,
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        name: Optional[str] = None,
         **kwargs: Any,
     ) -> Any:
         event = map_llm_start(

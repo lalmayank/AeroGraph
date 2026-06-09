@@ -10,12 +10,14 @@ from aerograph_sdk.events import (
     build_tool_call_event,
     build_tool_result_event,
     build_error_event,
+    build_note_event,
 )
 from aerograph_sdk.contracts.generated import (
     PromptEvent,
     ResponseEvent,
     ToolCallEvent,
     ToolResultEvent,
+    NoteEvent,
     TraceEvent,
 )
 from aerograph_langchain.span_ids import derive_span_id
@@ -164,11 +166,44 @@ def map_error(
     span_id = derive_span_id(run_id) + "_error"
     parent_span_id = derive_span_id(run_id)
     
+    error_msg = str(error).strip()
+    if not error_msg:
+        error_msg = type(error).__name__ or "Unknown error"
+
     return build_error_event(
         trace_id=trace_id,
         span_id=span_id,
         parent_span_id=parent_span_id,
-        message=str(error),
+        message=error_msg,
         actor_id="langchain",
         actor_name="LangChain",
+    )
+
+
+def map_chain_start(
+    serialized: Optional[Dict[str, Any]],
+    run_id: uuid.UUID,
+    trace_id: str,
+    parent_run_id: Optional[uuid.UUID] = None,
+    name: Optional[str] = None,
+) -> NoteEvent:
+    """Emit a note event for a chain/agent start so its spanId exists as a node."""
+    span_id = derive_span_id(run_id)
+    parent_span_id = derive_span_id(parent_run_id) if parent_run_id else None
+
+    # Try to derive a human-readable name for the chain
+    chain_name = name
+    if not chain_name and serialized:
+        chain_name = serialized.get("name") or serialized.get("id", ["chain"])[-1]
+    
+    chain_name = chain_name or "chain"
+
+    return build_note_event(
+        trace_id=trace_id,
+        span_id=span_id,
+        parent_span_id=parent_span_id,
+        actor_id="langchain",
+        actor_name="LangChain",
+        title=chain_name,
+        payload={"chain": chain_name},
     )
