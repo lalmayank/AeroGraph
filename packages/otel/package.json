@@ -1,0 +1,61 @@
+{
+  "name": "@aerograph/otel",
+  "version": "0.1.0",
+  "private": false,
+  "description": "OpenTelemetry bridge for AeroGraph — export/import OTLP traces.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SGcpu/AeroGraph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SGcpu/AeroGraph/issues"
+  },
+  "homepage": "https://github.com/SGcpu/AeroGraph#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "opentelemetry",
+    "otlp",
+    "trace",
+    "observability",
+    "aerograph"
+  ],
+  "scripts": {
+    "prebuild": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@aerograph/contracts": "^0.2.0"
+  },
+  "dependencies": {
+    "@aerograph/contracts": "0.2.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "eslint": "^9.9.0",
+    "@eslint/js": "^9.9.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
