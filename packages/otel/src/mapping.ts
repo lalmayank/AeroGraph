@@ -201,6 +201,55 @@ export function buildAttributesFromEvent(event: TraceEvent): OtlpAttribute[] {
 }
 
 /**
+ * Extract a string representation of an attribute value by key.
+ */
+export function extractAttributeValue(attrs: OtlpAttribute[] | undefined, key: string): string | undefined {
+  if (!attrs) return undefined;
+  for (const attr of attrs) {
+    if (attr.key === key) {
+      const val = attr.value;
+      if ('stringValue' in val) return val.stringValue;
+      if ('intValue' in val) return String(val.intValue);
+      if ('doubleValue' in val) return String(val.doubleValue);
+      if ('boolValue' in val) return String(val.boolValue);
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Resolve an AeroGraph TraceEventKind from an OTLP span using heuristics.
+ */
+export function resolveAeroGraphKindFromSpan(span: import('./otlp-schema.js').OtlpSpan): TraceEventKind {
+  const aeroKind = extractAttributeValue(span.attributes, AEROGRAPH_ATTRS.KIND);
+  if (aeroKind) {
+    return aeroKind as TraceEventKind;
+  }
+
+  const opName = extractAttributeValue(span.attributes, "gen_ai.operation.name");
+  if (span.name.includes("gen_ai.chat") || opName === "chat") {
+    return "response";
+  }
+
+  const toolName = extractAttributeValue(span.attributes, "gen_ai.tool.name");
+  const toolCallId = extractAttributeValue(span.attributes, "gen_ai.tool.call.id");
+  if (toolName && toolCallId) {
+    return "tool_call";
+  }
+
+  const errorType = extractAttributeValue(span.attributes, "error.type");
+  if (errorType || span.status?.code === STATUS_CODE.ERROR) {
+    return "error";
+  }
+
+  if (opName === "retrieve") {
+    return "retriever";
+  }
+
+  return "note";
+}
+
+/**
  * Convert AeroGraph TraceLink[] to OTLP OtlpLink[].
  * Each link carries the aerograph.link.rel attribute.
  *

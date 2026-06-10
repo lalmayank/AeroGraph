@@ -21,6 +21,9 @@ export type { OtlpExportRequest, OtlpSpan, OtlpAttribute, OtlpLink, OtlpAnyValue
 // Attribute key constants
 export { AEROGRAPH_ATTRS } from "./constants.js";
 export type { AerographAttrKey } from "./constants.js";
+// Import functions
+export { importOtlpSpanToEvent, importOtlpToEvents } from "./import.js";
+export type { MappingContext } from "./import.js";
 
 // Timestamp utilities
 export { isoToUnixNano, unixNanoToIso } from "./timestamp.js";

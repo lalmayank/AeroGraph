@@ -4,6 +4,7 @@ import { validateTraceEvent, validateTraceForkRequest, validateTraceForkResponse
 import { getDatabase } from "./sqlite/db";
 import { runMigrations } from "./sqlite/migrate";
 import { SqliteTraceStore } from "./sqliteStore";
+import { createOtlpIngestHandler } from "./otel/ingest";
 
 export type CreateAppOptions = {
   dbPath?: string;
@@ -39,6 +40,8 @@ export function createApp(options: CreateAppOptions = {}): express.Express {
       res.status(400).json({ error: err?.message ?? String(err) });
     }
   });
+
+  app.post("/v1/otlp/traces", createOtlpIngestHandler(store));
 
   app.get("/v1/traces", (_req, res) => {
     res.json(store.listTraces());

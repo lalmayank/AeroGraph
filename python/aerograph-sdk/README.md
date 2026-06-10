@@ -1,6 +1,12 @@
 # aerograph-sdk
 
-Python SDK for [AeroGraph](https://github.com/SGcpu/AeroGraph) — the open-source flight recorder for AI agent workflows.
+The core Python Flight Recorder for emitting normalized trace events from any Python codebase to the AeroGraph collector.
+
+## Overview
+
+AeroGraph is an open-source cognitive observability layer for AI agent workflows. It allows you to record, playback, and visually inspect the deterministic decision-making paths of your agents.
+
+This SDK provides a `FlightRecorder` instance to seamlessly construct and emit strictly validated `TraceEvent` objects.
 
 ## Installation
 
@@ -8,29 +14,53 @@ Python SDK for [AeroGraph](https://github.com/SGcpu/AeroGraph) — the open-sour
 pip install aerograph-sdk
 ```
 
-## Quickstart
+*(Requires Python >= 3.10)*
+
+## Quick Start
 
 ```python
 from aerograph_sdk import FlightRecorder
 
+# 1. Initialize the recorder
 recorder = FlightRecorder(
-    endpoint="http://localhost:4317",
-    actor={"id": "my-agent", "name": "My Agent"},
+    endpoint="http://localhost:4317", # AeroGraph Collector URL
+    actor={"id": "my-travel-agent", "name": "Travel Planner"}
 )
 
-# Emit events
-prompt_event = recorder.prompt(parent_span_id=None, text="What is AeroGraph?")
-recorder.response(parent_span_id=prompt_event.spanId, text="AeroGraph records agent traces.")
+# 2. Emit events
+prompt_event = recorder.prompt(text="Plan a trip to Tokyo")
+
+response_event = recorder.response(
+    parent_span_id=prompt_event.spanId,
+    text="Here is your 3-day itinerary..."
+)
 ```
 
-## Features
+## Async Usage
 
-- Emit 10 event kinds: `prompt`, `response`, `tool_call`, `tool_result`, `handoff`, `error`, `note`, `state_snapshot`, `retriever`, `checkpoint`
-- Sync and async emission via `httpx`
-- Batch emission with deterministic event ordering
-- Cross-language hash compatibility with the TypeScript SDK
-- Pydantic v2 contract validation
+Every method has an `_async` twin:
+
+```python
+await recorder.prompt_async(text="Hello")
+```
+
+## Available Event Kinds
+
+The `FlightRecorder` supports 10 canonical event kinds:
+- `prompt`: Input sent to an LLM.
+- `response`: Output from an LLM.
+- `tool_call`: Invocation of a tool.
+- `tool_result`: The tool's resulting output.
+- `handoff`: Delegating execution from one agent to another.
+- `error`: Any exception or system failure.
+- `retriever`: RAG retrieval query and source documents.
+- `state_snapshot`: A deterministic hash of a LangGraph node's state.
+- `checkpoint`: A human-in-the-loop pause.
+- `note`: Freeform structured annotations.
+
+## Span Hierarchy
+
+Every event acts as a "span" in the trace tree. To link a child event to a parent event, pass the parent's `spanId` via the `parent_span_id` parameter.
 
 ## License
-
 Apache-2.0

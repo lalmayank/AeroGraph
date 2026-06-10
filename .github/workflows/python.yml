@@ -25,9 +25,13 @@ jobs:
         run: uv pip install --system -e python/aerograph-sdk[dev]
       - name: Install aerograph-langchain dependencies
         run: uv pip install --system -e python/aerograph-langchain[dev]
+      - name: Install aerograph-otel dependencies
+        run: uv pip install --system -e python/aerograph-otel[dev]
       - name: Test aerograph-sdk
         run: pytest python/aerograph-sdk/tests
       - name: Test aerograph-langchain
         run: pytest python/aerograph-langchain/tests
+      - name: Test aerograph-otel
+        run: pytest python/aerograph-otel/src/aerograph_otel/tests
       - name: Check Model Drift
         run: python python/aerograph-sdk/tools/check_generated_contracts.py

@@ -82,16 +82,16 @@
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Implement `packages/otel/src/mapping.ts` — extend with `resolveAeroGraphKindFromSpan(span: OtlpSpan): TraceEventKind` and `extractAttributeValue(attrs: OtlpAttribute[], key: string): string | undefined` (same file as T016, new exports added)
-- [ ] T029 [P] [US2] Implement `python/aerograph-otel/src/aerograph_otel/mapping.py` — extend with `resolve_aerograph_kind_from_span(span: dict) -> str` and `extract_attribute_value(attrs: list, key: str) -> str | None` mirroring T028
-- [ ] T030 [US2] Implement `packages/otel/src/import.ts` — `importOtlpSpanToEvent(span: OtlpSpan, ctx: MappingContext): TraceEvent` (lossless path + heuristic path per `data-model.md §5.2`) and `importOtlpToEvents(request: OtlpExportRequest, ctx?: Partial<MappingContext>): TraceEvent[]` (depends on T009, T010, T011, T028)
-- [ ] T031 [US2] Implement `python/aerograph-otel/src/aerograph_otel/import_.py` — `import_otlp_span_to_event(span, ctx)` and `import_otlp_to_events(request, *, default_actor_id, preserve_original_ids)` mirroring T030 (depends on T012, T013, T029)
-- [ ] T032 [US2] Update `packages/otel/src/index.ts` — add re-exports for `importOtlpSpanToEvent`, `importOtlpToEvents`, `MappingContext`
-- [ ] T033 [US2] Update `python/aerograph-otel/src/aerograph_otel/__init__.py` — add re-exports for `import_otlp_span_to_event`, `import_otlp_to_events`, `MappingContext`
-- [ ] T034 [P] [US2] Write `packages/otel/src/__tests__/import.test.ts` — unit tests for `importOtlpSpanToEvent`: lossless round-trip path (aerograph.kind present), heuristic paths for `gen_ai.chat`, `gen_ai.tool.call`, error spans, and unknown spans falling back to `note`
-- [ ] T035 [P] [US2] Write `packages/otel/src/__tests__/roundtrip.test.ts` — for all 10 event kinds: `importOtlpSpanToEvent(exportEventToOtlpSpan(event), ctx)` must preserve traceId, spanId, parentSpanId, kind, actor.id, actor.kind, status, occurredAt, and links topology
-- [ ] T036 [P] [US2] Write `python/aerograph-otel/src/aerograph_otel/tests/test_import.py` — unit tests mirroring T034
-- [ ] T037 [P] [US2] Write `python/aerograph-otel/src/aerograph_otel/tests/test_roundtrip.py` — round-trip tests mirroring T035
+- [x] T028 [P] [US2] Implement `packages/otel/src/mapping.ts` — extend with `resolveAeroGraphKindFromSpan(span: OtlpSpan): TraceEventKind` and `extractAttributeValue(attrs: OtlpAttribute[], key: string): string | undefined` (same file as T016, new exports added)
+- [x] T029 [P] [US2] Implement `python/aerograph-otel/src/aerograph_otel/mapping.py` — extend with `resolve_aerograph_kind_from_span(span: dict) -> str` and `extract_attribute_value(attrs: list, key: str) -> str | None` mirroring T028
+- [x] T030 [US2] Implement `packages/otel/src/import.ts` — `importOtlpSpanToEvent(span: OtlpSpan, ctx: MappingContext): TraceEvent` (lossless path + heuristic path per `data-model.md §5.2`) and `importOtlpToEvents(request: OtlpExportRequest, ctx?: Partial<MappingContext>): TraceEvent[]` (depends on T009, T010, T011, T028)
+- [x] T031 [US2] Implement `python/aerograph-otel/src/aerograph_otel/import_.py` — `import_otlp_span_to_event(span, ctx)` and `import_otlp_to_events(request, *, default_actor_id, preserve_original_ids)` mirroring T030 (depends on T012, T013, T029)
+- [x] T032 [US2] Update `packages/otel/src/index.ts` — add re-exports for `importOtlpSpanToEvent`, `importOtlpToEvents`, `MappingContext`
+- [x] T033 [US2] Update `python/aerograph-otel/src/aerograph_otel/__init__.py` — add re-exports for `import_otlp_span_to_event`, `import_otlp_to_events`, `MappingContext`
+- [x] T034 [P] [US2] Write `packages/otel/src/__tests__/import.test.ts` — unit tests for `importOtlpSpanToEvent`: lossless round-trip path (aerograph.kind present), heuristic paths for `gen_ai.chat`, `gen_ai.tool.call`, error spans, and unknown spans falling back to `note`
+- [x] T035 [P] [US2] Write `packages/otel/src/__tests__/roundtrip.test.ts` — for all 10 event kinds: `importOtlpSpanToEvent(exportEventToOtlpSpan(event), ctx)` must preserve traceId, spanId, parentSpanId, kind, actor.id, actor.kind, status, occurredAt, and links topology
+- [x] T036 [P] [US2] Write `python/aerograph-otel/src/aerograph_otel/tests/test_import.py` — unit tests mirroring T034
+- [x] T037 [P] [US2] Write `python/aerograph-otel/src/aerograph_otel/tests/test_roundtrip.py` — round-trip tests mirroring T035
 
 **Checkpoint**: All import and round-trip tests pass in both TS and Python. Full parity gate still passes.
 
@@ -105,10 +105,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Add `@aerograph/otel` to `apps/collector/package.json` dependencies
-- [ ] T039 [US3] Create `apps/collector/src/otel/ingest.ts` — `createOtlpIngestHandler(store: SqliteTraceStore): express.RequestHandler` implementing: parse body with `otlpExportRequestSchema`, call `importOtlpToEvents()`, validate each with `validateTraceEvent()`, append each via `store.appendEvent()`, return 201 or 400 with error detail
-- [ ] T040 [US3] Modify `apps/collector/src/server.ts` — import `createOtlpIngestHandler` and add `app.post('/v1/otlp/traces', createOtlpIngestHandler(store))` (additive only — no other lines changed)
-- [ ] T041 [US3] Write `apps/collector/src/otel/ingest.test.ts` — integration tests using in-memory SQLite store: (a) valid OTLP JSON returns 201 and events are retrievable via `store.getTrace()`, (b) malformed JSON returns 400, (c) OTLP with invalid span fields returns 400, (d) existing `POST /v1/events` still works (regression)
+- [x] T038 [US3] Add `@aerograph/otel` to `apps/collector/package.json` dependencies
+- [x] T039 [US3] Create `apps/collector/src/otel/ingest.ts` — `createOtlpIngestHandler(store: SqliteTraceStore): express.RequestHandler` implementing: parse body with `otlpExportRequestSchema`, call `importOtlpToEvents()`, validate each with `validateTraceEvent()`, append each via `store.appendEvent()`, return 201 or 400 with error detail
+- [x] T040 [US3] Modify `apps/collector/src/server.ts` — import `createOtlpIngestHandler` and add `app.post('/v1/otlp/traces', createOtlpIngestHandler(store))` (additive only — no other lines changed)
+- [x] T041 [US3] Write `apps/collector/src/otel/ingest.test.ts` — integration tests using in-memory SQLite store: (a) valid OTLP JSON returns 201 and events are retrievable via `store.getTrace()`, (b) malformed JSON returns 400, (c) OTLP with invalid span fields returns 400, (d) existing `POST /v1/events` still works (regression)
 
 **Checkpoint**: `npm run test -w apps/collector` passes. `POST /v1/otlp/traces` works end-to-end. All existing collector tests still pass.
 
@@ -118,11 +118,11 @@
 
 **Purpose**: CI governance, documentation, and final validation.
 
-- [ ] T042 [P] Add `npm run build -w @aerograph/otel` and `npm run test -w @aerograph/otel` to root `package.json` build and test scripts (CI integration)
-- [ ] T043 [P] Add `cd python/aerograph-otel && pytest` step to Python CI configuration (same pattern as `aerograph-sdk` in Feature 003)
-- [ ] T044 Verify `npm run schema:check` still passes after all package additions (schema drift gate — run and confirm output)
-- [ ] T045 [P] Update root `README.md` — add `@aerograph/otel` and `aerograph-otel` to package listing, add brief interoperability section referencing `quickstart.md`
-- [ ] T046 Run end-to-end validation per `quickstart.md` — execute all four flows (export, import via collector, round-trip, correlation) and confirm all validation checklist items pass
+- [x] T042 [P] Add `npm run build -w @aerograph/otel` and `npm run test -w @aerograph/otel` to root `package.json` build and test scripts (CI integration)
+- [x] T043 [P] Add `cd python/aerograph-otel && pytest` step to Python CI configuration (same pattern as `aerograph-sdk` in Feature 003)
+- [x] T044 Verify `npm run schema:check` still passes after all package additions (schema drift gate — run and confirm output)
+- [x] T045 [P] Update root `README.md` — add `@aerograph/otel` and `aerograph-otel` to package listing, add brief interoperability section referencing `quickstart.md`
+- [x] T046 Run end-to-end validation per `quickstart.md` — execute all four flows (export, import via collector, round-trip, correlation) and confirm all validation checklist items pass
 
 ---
 

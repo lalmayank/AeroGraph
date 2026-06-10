@@ -165,6 +165,52 @@ def build_attributes_from_event(event: dict[str, Any]) -> list[dict[str, Any]]:
     return attrs
 
 
+def extract_attribute_value(attrs: list[dict[str, Any]], key: str) -> str | None:
+    """Extract a string representation of an attribute value by key."""
+    if not attrs:
+        return None
+    for attr in attrs:
+        if attr.get("key") == key:
+            val = attr.get("value", {})
+            if "stringValue" in val:
+                return val["stringValue"]
+            if "intValue" in val:
+                return str(val["intValue"])
+            if "doubleValue" in val:
+                return str(val["doubleValue"])
+            if "boolValue" in val:
+                return str(val["boolValue"])
+    return None
+
+
+def resolve_aerograph_kind_from_span(span: dict[str, Any]) -> str:
+    """Resolve an AeroGraph TraceEventKind from an OTLP span using heuristics."""
+    attrs = span.get("attributes", [])
+    
+    aero_kind = extract_attribute_value(attrs, AeroGraphAttrs.KIND)
+    if aero_kind:
+        return aero_kind
+    
+    op_name = extract_attribute_value(attrs, "gen_ai.operation.name")
+    if "gen_ai.chat" in span.get("name", "") or op_name == "chat":
+        return "response"
+        
+    tool_name = extract_attribute_value(attrs, "gen_ai.tool.name")
+    tool_call_id = extract_attribute_value(attrs, "gen_ai.tool.call.id")
+    if tool_name and tool_call_id:
+        return "tool_call"
+        
+    error_type = extract_attribute_value(attrs, "error.type")
+    status = span.get("status", {})
+    if error_type or status.get("code") == STATUS_CODE_ERROR:
+        return "error"
+        
+    if op_name == "retrieve":
+        return "retriever"
+        
+    return "note"
+
+
 def export_links_to_otlp(links: list[dict[str, Any]], trace_id: str) -> list[dict[str, Any]]:
     """
     Convert AeroGraph TraceLink list to OTLP links list.
