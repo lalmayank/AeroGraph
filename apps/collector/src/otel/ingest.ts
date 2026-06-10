@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { SqliteTraceStore } from "../store.js";
+import { SqliteTraceStore } from "../sqliteStore.js";
 import { otlpExportRequestSchema, importOtlpToEvents } from "@aerograph/otel";
 import { validateTraceEvent } from "@aerograph/contracts";
 import { ZodError } from "zod";
