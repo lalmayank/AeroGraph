@@ -35,3 +35,4 @@ docs/architecture
 .vscode/
 AGENTS.md
 uv.lock
+bump.js

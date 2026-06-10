@@ -1,6 +1,6 @@
 {
   "name": "@aerograph/adapter-langchain",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "LangChain adapter for emitting AeroGraph traces from agent workflows.",
   "type": "module",

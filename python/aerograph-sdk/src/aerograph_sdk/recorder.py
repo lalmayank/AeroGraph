@@ -126,8 +126,30 @@ class FlightRecorder:
     # ------------------------------------------------------------------
 
     def _serialize_event(self, event: _TraceEventModel) -> str:
-        """Serialize event model to JSON string."""
-        return event.model_dump_json(exclude_none=False)
+        """Serialize event model to JSON string.
+
+        Uses exclude_none=True so that optional fields that are None are omitted
+        from the JSON body entirely. The collector's Zod schema uses .optional()
+        (not .nullable()), meaning absent is valid but null is rejected.
+        """
+        import json as _json
+        data = self._event_to_dict(event)
+        return _json.dumps(data)
+
+    def _event_to_dict(self, event: _TraceEventModel) -> dict:
+        """Convert event to a JSON-safe dict applying Zod nullability rules.
+
+        Uses model_dump_json (Pydantic's serializer, which handles datetime/enum
+        correctly) then parses back to a dict. This avoids TypeError for datetime
+        objects that plain json.dumps cannot handle.
+
+        parentSpanId must be present as null for root spans (.nullable() in Zod).
+        """
+        import json as _json
+        data = _json.loads(event.model_dump_json(exclude_none=True))
+        if event.parentSpanId is None and "parentSpanId" not in data:
+            data["parentSpanId"] = None
+        return data
 
     def _get_client(self) -> httpx.Client:
         if self._http_client is not None:
@@ -203,7 +225,7 @@ class FlightRecorder:
             EmissionError: On non-2xx HTTP response.
         """
         ordered = self._sort_batch(events)
-        body = json.dumps([json.loads(e.model_dump_json()) for e in ordered])
+        body = json.dumps([self._event_to_dict(e) for e in ordered])
         with self._get_client() as client:
             response = client.post(
                 f"{self.endpoint}/v1/events",
@@ -232,7 +254,7 @@ class FlightRecorder:
             EmissionError: On non-2xx HTTP response.
         """
         ordered = self._sort_batch(events)
-        body = json.dumps([json.loads(e.model_dump_json()) for e in ordered])
+        body = json.dumps([self._event_to_dict(e) for e in ordered])
         async with self._get_async_client() as client:
             response = await client.post(
                 f"{self.endpoint}/v1/events",

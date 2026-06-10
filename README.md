@@ -80,8 +80,10 @@ An open-source flight recorder for AI agent workflows - local-first, append-only
 - `packages/contracts`: event schema + shared contracts (source of truth)
 - `packages/sdk`: reference SDK for emitting normalized trace events (Node.js)
 - `packages/adapter-langchain`: MVP adapter for LangChain workflows (Node.js)
+- `packages/otel`: OpenTelemetry export/import bridge (Node.js)
 - `python/aerograph-sdk`: reference SDK for emitting normalized trace events (Python)
 - `python/aerograph-langchain`: MVP adapter for LangChain workflows (Python)
+- `python/aerograph-otel`: OpenTelemetry export/import bridge (Python)
 - `apps/collector`: trace ingest + SQLite storage + lineage/diff/analysis endpoints
 - `apps/web`: interactive trace graph UI with lineage panel, diff overlay, and loop warnings
 - `apps/demo`: demo emitter + Phase 2 smoke demo
@@ -146,6 +148,15 @@ open http://localhost:5173
 | `GET /v1/traces/:aId/diff/:bId` | GET | Lineage-aware deterministic diff |
 | `GET /v1/traces/:id/analysis` | GET | Loop warnings + failure analysis |
 
+## OpenTelemetry Interoperability
+
+AeroGraph provides a bidirectional OpenTelemetry (OTLP) bridge via `@aerograph/otel` (TypeScript) and `aerograph-otel` (Python).
+- **Export**: Send AeroGraph traces to Jaeger, Datadog, or any OTLP-compatible backend.
+- **Import**: Ingest external OTLP spans into the AeroGraph collector via the `POST /v1/otlp/traces` endpoint.
+
+
+
+
 ## Architecture
 
 - **No distributed infrastructure**: no queues, no collectors, no Kubernetes - all local SQLite
@@ -188,6 +199,46 @@ There are two supported ways to ship AFR:
 
 - **Self-hosted**: users run the collector and web UI themselves, then point their app at the collector endpoint.
 - **Hosted**: you run the collector and web UI as a service, and users only install the SDK or adapter in their own project.
+
+---
+
+## TypeScript / Node.js Packages
+
+AeroGraph provides native TypeScript libraries for capturing and validating traces.
+
+### `@aerograph/contracts`
+The single source of truth for all AeroGraph Event schemas using Zod. Use this package if you are building custom ingestion tools or new language SDKs that need schema validation in TypeScript.
+```bash
+npm install @aerograph/contracts
+```
+
+### `@aerograph/sdk`
+The core Node.js Flight Recorder for emitting normalized trace events from any JavaScript/TypeScript codebase.
+```bash
+npm install @aerograph/sdk
+```
+```typescript
+import { FlightRecorder } from "@aerograph/sdk";
+
+const recorder = new FlightRecorder({ endpoint: "http://localhost:4317", actor: { id: "agent-1" } });
+await recorder.prompt({ text: "Hello!" });
+```
+
+### `@aerograph/adapter-langchain`
+An automatic callback adapter for LangChain.js. Records prompts, tools, RAG queries, and multi-agent handoffs with zero boilerplate.
+```bash
+npm install @aerograph/adapter-langchain @aerograph/sdk
+```
+```typescript
+import { AeroGraphCallbackHandler } from "@aerograph/adapter-langchain";
+// Pass handler to your LangChain invocations
+```
+
+### `@aerograph/otel`
+The bidirectional OpenTelemetry bridge. Export AeroGraph traces to OTLP JSON, or ingest external OTLP spans.
+```bash
+npm install @aerograph/otel
+```
 
 ---
 
