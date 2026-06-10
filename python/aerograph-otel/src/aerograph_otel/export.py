@@ -18,6 +18,8 @@ Rules (identical to TypeScript):
 
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Any
 
 from aerograph_otel import __version__
@@ -32,6 +34,31 @@ from aerograph_otel.mapping import (
 from aerograph_otel.timestamp import iso_to_unix_nano
 
 _ONE_MS_IN_NS = 1_000_000
+
+_HEX_RE = re.compile(r'^[0-9a-fA-F]+$')
+
+
+def _to_otlp_hex(id_: str, bytes_: int) -> str:
+    """
+    Normalize any AeroGraph ID to a valid OTLP hex string.
+
+    OTLP strictly requires:
+        - traceId: 32 lowercase hex chars (16 bytes)
+        - spanId:  16 lowercase hex chars (8 bytes)
+
+    AeroGraph uses human-readable prefixed IDs like ``t_<base64url>`` or ``s_<base64url>``.
+    This function deterministically maps any such ID to the correct hex length via SHA-256
+    so that the same input always produces the same output (roundtrip-stable).
+
+    Mirrors toOtlpHex() in export.ts exactly.
+    """
+    expected_len = bytes_ * 2
+    # If already a valid hex string of the right length, pass through unchanged.
+    if len(id_) == expected_len and _HEX_RE.match(id_):
+        return id_.lower()
+    # Otherwise, deterministically derive a hex string via SHA-256 truncation.
+    digest = hashlib.sha256(id_.encode('utf-8')).hexdigest()
+    return digest[:expected_len]
 
 
 def _sort_events_deterministic(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -70,8 +97,8 @@ def export_event_to_otlp_span(event: dict[str, Any]) -> dict[str, Any]:
         status["message"] = payload.get("message", "")
 
     span: dict[str, Any] = {
-        "traceId": event["traceId"],
-        "spanId": event["spanId"],
+        "traceId": _to_otlp_hex(event["traceId"], 16),
+        "spanId": _to_otlp_hex(event["spanId"], 8),
         "name": get_span_name_for_kind(kind),
         "kind": get_span_kind_for_kind(kind),
         "startTimeUnixNano": start_nano_str,
@@ -84,7 +111,7 @@ def export_event_to_otlp_span(event: dict[str, Any]) -> dict[str, Any]:
     # parentSpanId: only include if not null/None/missing
     parent = event.get("parentSpanId")
     if parent is not None:
-        span["parentSpanId"] = parent
+        span["parentSpanId"] = _to_otlp_hex(parent, 8)
 
     return span
 

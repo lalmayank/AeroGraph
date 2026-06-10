@@ -22,9 +22,34 @@ import { sortTraceEventsDeterministic } from "@aerograph/contracts";
 import { isoToUnixNano } from "./timestamp.js";
 import { buildAttributesFromEvent, exportLinksToOtlp, getSpanKindInt, getSpanNameForKind, STATUS_CODE } from "./mapping.js";
 import type { OtlpExportRequest, OtlpSpan } from "./otlp-schema.js";
+import { createHash } from "crypto";
 
 const PACKAGE_VERSION = "0.1.0";
 const ONE_MS_IN_NS = 1_000_000n;
+
+/**
+ * Normalize any AeroGraph ID to a valid OTLP hex string.
+ *
+ * OTLP strictly requires:
+ *   - traceId: 32 lowercase hex chars (16 bytes)
+ *   - spanId:  16 lowercase hex chars (8 bytes)
+ *
+ * AeroGraph uses human-readable prefixed IDs like `t_<base64url>` or `s_<base64url>`.
+ * This function deterministically maps any such ID to the correct hex length via SHA-256
+ * so that the same input always produces the same output (roundtrip-stable).
+ *
+ * @param id     The AeroGraph ID string (e.g. "t_abc123" or "s_xyz789")
+ * @param bytes  16 for traceId, 8 for spanId
+ */
+function toOtlpHex(id: string, bytes: 16 | 8): string {
+  // If already a valid hex string of the right length, pass through unchanged.
+  const expectedLen = bytes * 2;
+  if (/^[0-9a-f]+$/i.test(id) && id.length === expectedLen) {
+    return id.toLowerCase();
+  }
+  // Otherwise, deterministically derive a hex string via SHA-256 truncation.
+  return createHash("sha256").update(id, "utf8").digest("hex").slice(0, expectedLen);
+}
 
 export interface ExportOptions {
   /** Service name to use in the OTLP resource attributes. Default: "aerograph-agent" */
@@ -44,8 +69,8 @@ export function exportEventToOtlpSpan(event: TraceEvent): OtlpSpan {
   const endNano = (BigInt(startNano) + ONE_MS_IN_NS).toString();
 
   const span: OtlpSpan = {
-    traceId: event.traceId,
-    spanId: event.spanId,
+    traceId: toOtlpHex(event.traceId, 16),
+    spanId: toOtlpHex(event.spanId, 8),
     name: getSpanNameForKind(event.kind),
     kind: getSpanKindInt(event.kind),
     startTimeUnixNano: startNano,
@@ -62,7 +87,7 @@ export function exportEventToOtlpSpan(event: TraceEvent): OtlpSpan {
 
   // parentSpanId: only include if not null
   if (event.parentSpanId !== null) {
-    span.parentSpanId = event.parentSpanId;
+    span.parentSpanId = toOtlpHex(event.parentSpanId, 8);
   }
 
   return span;
