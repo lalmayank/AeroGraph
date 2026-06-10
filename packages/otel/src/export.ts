@@ -24,7 +24,7 @@ import { buildAttributesFromEvent, exportLinksToOtlp, getSpanKindInt, getSpanNam
 import type { OtlpExportRequest, OtlpSpan } from "./otlp-schema.js";
 import { createHash } from "crypto";
 
-const PACKAGE_VERSION = "0.1.0";
+const PACKAGE_VERSION = "0.1.1";
 const ONE_MS_IN_NS = 1_000_000n;
 
 /**

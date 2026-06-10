@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@aerograph/contracts": "^0.2.0",
-    "@aerograph/otel": "^0.1.0"
+    "@aerograph/otel": "^0.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
