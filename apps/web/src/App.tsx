@@ -587,7 +587,9 @@ export default function App() {
       {/* Header */}
       <header className="header">
         <div className="header-brand">
-          <div className="header-logo">✈</div>
+          <div className="header-logo" style={{ overflow: "hidden", border: "none", background: "transparent" }}>
+            <img src="https://res.cloudinary.com/decbdlnqg/image/upload/v1781969113/Logo_8_1_axs9mt.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
           <span className="title">AeroGraph</span>
           <span className="title-badge">Phase 2</span>
         </div>
